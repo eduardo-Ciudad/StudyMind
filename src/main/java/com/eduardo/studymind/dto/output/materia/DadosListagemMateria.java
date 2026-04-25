@@ -1,4 +1,4 @@
-package com.eduardo.studymind.dto.input.materia;
+package com.eduardo.studymind.dto.output.materia;
 
 import com.eduardo.studymind.domain.materia.Materia;
 

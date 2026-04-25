@@ -1,4 +1,4 @@
-package com.eduardo.studymind.dto.input.questao;
+package com.eduardo.studymind.dto.output.questao;
 
 import com.eduardo.studymind.domain.questao.Questao;
 import com.eduardo.studymind.domain.questao.TipoQuestao;

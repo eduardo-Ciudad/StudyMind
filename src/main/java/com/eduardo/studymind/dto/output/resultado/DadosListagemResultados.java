@@ -1,4 +1,4 @@
-package com.eduardo.studymind.dto.input.resultado;
+package com.eduardo.studymind.dto.output.resultado;
 
 import com.eduardo.studymind.domain.resultado.RespostaStatus;
 import com.eduardo.studymind.domain.resultado.Resultado;
