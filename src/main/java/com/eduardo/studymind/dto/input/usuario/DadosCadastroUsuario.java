@@ -1,5 +1,7 @@
 package com.eduardo.studymind.dto.input.usuario;
 
+import com.eduardo.studymind.domain.usuario.Role;
+import com.eduardo.studymind.domain.usuario.Usuario;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -18,6 +20,14 @@ public record DadosCadastroUsuario(
         String senha,
 
         @NotNull
-        Rule rule
+        Role role
 ) {
+    public DadosCadastroUsuario(Usuario usuario) {
+        this(
+                usuario.getNome(),
+                usuario.getEmail(),
+                usuario.getSenha(),
+                usuario.getRole()
+        );
+    }
 }

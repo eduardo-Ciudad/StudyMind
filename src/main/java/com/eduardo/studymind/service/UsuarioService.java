@@ -1,0 +1,54 @@
+package com.eduardo.studymind.service;
+
+import com.eduardo.studymind.domain.usuario.Usuario;
+import com.eduardo.studymind.domain.usuario.UsuarioRepository;
+import com.eduardo.studymind.dto.input.usuario.DadosCadastroUsuario;
+import com.eduardo.studymind.dto.output.usuario.DadosDetalhamentoUsuario;
+import com.eduardo.studymind.dto.output.usuario.DadosListagemUsuario;
+import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
+import com.eduardo.studymind.exception.RegrasDeNegocioException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class UsuarioService {
+
+    private final UsuarioRepository usuarioRepository;
+
+    @Transactional
+    public DadosCadastroUsuario cadastrarUsuario(DadosCadastroUsuario dados){
+        if(usuarioRepository.existsByEmail(dados.email())) {
+            throw new RegrasDeNegocioException("E-mail já cadastrado");
+        }
+
+        var usuario = new Usuario();
+        usuario.setNome(dados.nome());
+        usuario.setEmail(dados.email());
+        // criptografar a senha com springSecurity
+        usuario.setSenha(dados.senha());
+        usuario.setRole(dados.role());
+        usuario.setAtivo(true);
+
+        usuarioRepository.save(usuario);
+        return  new DadosCadastroUsuario(usuario);
+
+    }
+
+    public List<DadosListagemUsuario> listarUsuario(){
+        return usuarioRepository.findAll()
+                .stream()
+                .map(DadosListagemUsuario::new)
+                .toList();
+    }
+   /*
+    public DadosDetalhamentoUsuario atualizarUsuario(Long id, DadosDetalhamentoUsuario dados){
+        var usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario não Encontrado"));
+    }
+    */
+
+}
