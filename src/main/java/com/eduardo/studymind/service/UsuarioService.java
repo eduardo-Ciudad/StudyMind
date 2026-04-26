@@ -44,11 +44,34 @@ public class UsuarioService {
                 .map(DadosListagemUsuario::new)
                 .toList();
     }
-   /*
+
+    public DadosDetalhamentoUsuario buscarPorId(Long id){
+        var usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado"));
+        return new DadosDetalhamentoUsuario(usuario);
+    }
+
     public DadosDetalhamentoUsuario atualizarUsuario(Long id, DadosDetalhamentoUsuario dados){
         var usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario não Encontrado"));
-    }
-    */
 
+        if (dados.email() != null && !dados.email().equals(usuario.getEmail())) {
+            if (usuarioRepository.existsByEmail(dados.email())) {
+                throw  new RegrasDeNegocioException("E-mail já cadastrado");
+            }
+            usuario.setEmail(dados.email());
+        }
+
+        if (dados.nome() != null) usuario.setNome(dados.nome());
+
+        return  new DadosDetalhamentoUsuario(usuario);
+    }
+
+
+    @Transactional
+    public void desativar(Long id){
+        var usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado"));
+        usuario.setAtivo(false);
+    }
 }
