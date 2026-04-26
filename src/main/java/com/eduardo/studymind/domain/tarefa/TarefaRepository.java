@@ -6,6 +6,8 @@ import java.util.List;
 
 public interface TarefaRepository extends JpaRepository<Tarefa, Long> {
 
+    List<Tarefa> findAllByUsuarioIdAndStatusNot(Long usuarioId, TarefaStatus status);
+
     List<Tarefa> findAllByUsuarioIdAndStatus(Long usuarioId, TarefaStatus status);
 
     List<Tarefa> findAllByUsuarioIdAndTopicoId(Long usuarioId, Long topicoId);
