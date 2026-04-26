@@ -2,6 +2,7 @@ package com.eduardo.studymind.service;
 
 import com.eduardo.studymind.domain.usuario.Usuario;
 import com.eduardo.studymind.domain.usuario.UsuarioRepository;
+import com.eduardo.studymind.dto.input.usuario.DadosAtualizacaoUsuario;
 import com.eduardo.studymind.dto.input.usuario.DadosCadastroUsuario;
 import com.eduardo.studymind.dto.output.usuario.DadosDetalhamentoUsuario;
 import com.eduardo.studymind.dto.output.usuario.DadosListagemUsuario;
@@ -20,7 +21,7 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
 
     @Transactional
-    public DadosCadastroUsuario cadastrarUsuario(DadosCadastroUsuario dados){
+    public DadosDetalhamentoUsuario cadastrarUsuario(DadosCadastroUsuario dados){
         if(usuarioRepository.existsByEmail(dados.email())) {
             throw new RegrasDeNegocioException("E-mail já cadastrado");
         }
@@ -34,7 +35,7 @@ public class UsuarioService {
         usuario.setAtivo(true);
 
         usuarioRepository.save(usuario);
-        return  new DadosCadastroUsuario(usuario);
+        return  new DadosDetalhamentoUsuario(usuario);
 
     }
 
@@ -51,7 +52,8 @@ public class UsuarioService {
         return new DadosDetalhamentoUsuario(usuario);
     }
 
-    public DadosDetalhamentoUsuario atualizarUsuario(Long id, DadosDetalhamentoUsuario dados){
+    @Transactional
+    public DadosDetalhamentoUsuario atualizarUsuario(Long id, DadosAtualizacaoUsuario dados){
         var usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario não Encontrado"));
 
