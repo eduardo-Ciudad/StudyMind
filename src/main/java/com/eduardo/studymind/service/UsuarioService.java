@@ -9,6 +9,8 @@ import com.eduardo.studymind.dto.output.usuario.DadosListagemUsuario;
 import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
 import com.eduardo.studymind.exception.RegrasDeNegocioException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,11 +41,9 @@ public class UsuarioService {
 
     }
 
-    public List<DadosListagemUsuario> listarUsuario(){
-        return usuarioRepository.findAll()
-                .stream()
-                .map(DadosListagemUsuario::new)
-                .toList();
+    public Page<DadosListagemUsuario> listar(Pageable pageable) {
+        return usuarioRepository.findAllByAtivoTrue(pageable)
+                .map(DadosListagemUsuario::new);
     }
 
     public DadosDetalhamentoUsuario buscarPorId(Long id){
