@@ -1,12 +1,15 @@
 package com.eduardo.studymind.domain.resultado;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
 public interface ResultadoRepository extends JpaRepository<Resultado, Long> {
 
-    List<Resultado> findAllByUsuarioId(Long usuarioId);
+
+    Page<Resultado> findAllByUsuarioId(Long usuarioId, Pageable pageable);
 
     List<Resultado> findAllByUsuarioIdAndQuestaoTopicoId(Long usuarioId, Long topicoId);
 
