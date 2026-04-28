@@ -3,6 +3,7 @@ package com.eduardo.studymind.service;
 
 import com.eduardo.studymind.domain.materia.Materia;
 import com.eduardo.studymind.domain.materia.MateriaRepository;
+import com.eduardo.studymind.dto.input.materia.DadosAtualizacaoMateria;
 import com.eduardo.studymind.dto.input.materia.DadosCadastroMateria;
 import com.eduardo.studymind.dto.output.materia.DadosDetalhamentoMateria;
 import com.eduardo.studymind.dto.output.materia.DadosListagemMateria;
@@ -44,7 +45,7 @@ public class MateriaService {
     }
 
     @Transactional
-    public DadosDetalhamentoMateria atualizarMateria (Long id, DadosDetalhamentoMateria dados) {
+    public DadosDetalhamentoMateria atualizarMateria (Long id, DadosAtualizacaoMateria dados) {
         var materia = materiaRepository.findById(id)
         .orElseThrow(() -> new EntityNotFoundException("Materia nao encontrada"));
 
