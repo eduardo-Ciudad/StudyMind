@@ -37,8 +37,8 @@ public class TopicoService {
         topico.setNivel(dados.nivelDificuldade());
         topico.setAtivo(true);
 
-        topicoRepository.save(topico);
-        return new DadosDetalhamentoTopico(topico);
+        var topicoSalvo = topicoRepository.save(topico);
+        return new DadosDetalhamentoTopico(topicoSalvo);
     }
 
     public List<DadosListagemTopico> listarTopicos(Long materiaID) {

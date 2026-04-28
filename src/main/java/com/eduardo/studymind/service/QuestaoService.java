@@ -31,8 +31,8 @@ public class QuestaoService {
         questao.setTopico(topico);
         questao.setAtiva(true);
 
-        questaoRepository.save(questao);
-        return new DadosDetalhamentoQuestao(questao);
+        var questaoSalva = questaoRepository.save(questao);
+        return new DadosDetalhamentoQuestao(questaoSalva);
     }
 
     public Page<DadosListagemQuestao> listar(Pageable pageable) {

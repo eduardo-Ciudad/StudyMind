@@ -34,8 +34,8 @@ public class ResultadoService {
         resultado.setStatus(dados.status());
         resultado.setRespostaUsuario(dados.respostaUsuario());
 
-        resultadoRepository.save(resultado);
-        return new DadosDetalhamentoResultado(resultado);
+        var resultadoSalvo = resultadoRepository.save(resultado);
+        return new DadosDetalhamentoResultado(resultadoSalvo);
     }
 
     @Transactional(readOnly = true)

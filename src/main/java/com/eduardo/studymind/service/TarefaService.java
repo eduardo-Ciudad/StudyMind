@@ -46,8 +46,8 @@ public class TarefaService {
         tarefa.setPrazo(dados.time());
         tarefa.setStatus(TarefaStatus.PENDENTE);
 
-        tarefaRepository.save(tarefa);
-        return new DadosDetalhamentoTarefa(tarefa);
+        var tarefaSalva = tarefaRepository.save(tarefa);
+        return new DadosDetalhamentoTarefa(tarefaSalva);
     }
 
     public List<DadosListagemTarefa> listarPorUsuario(Long usuarioId, TarefaStatus status) {

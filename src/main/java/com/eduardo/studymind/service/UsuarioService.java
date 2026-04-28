@@ -36,8 +36,8 @@ public class UsuarioService {
         usuario.setRole(dados.role());
         usuario.setAtivo(true);
 
-        usuarioRepository.save(usuario);
-        return  new DadosDetalhamentoUsuario(usuario);
+        var usuarioSalvo = usuarioRepository.save(usuario);
+        return  new DadosDetalhamentoUsuario(usuarioSalvo);
 
     }
 
