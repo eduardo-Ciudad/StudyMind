@@ -85,15 +85,22 @@ class TopicoServiceTest {
     @Test
     @DisplayName("Deve retornar lista de topicos ativos")
     void listarTopicos_sucesso() {
+
+        var materia = new Materia();
+        materia.setId(1L);
+        materia.setNome("Matemática");
+
         var topico1 = new Topico();
         topico1.setId(1L);
         topico1.setNome("Geometria");
         topico1.setAtivo(true);
+        topico1.setMateria(materia);
 
         var topico2 = new Topico();
         topico2.setId(2L);
         topico2.setNome("Álgebra");
         topico2.setAtivo(true);
+        topico2.setMateria(materia);
 
         when(topicoRepository.findAllByAtivoTrue()).thenReturn(List.of(topico1, topico2));
 
