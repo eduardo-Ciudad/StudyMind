@@ -27,8 +27,8 @@ public class MateriaService {
         materia.setDescricao(dados.descricao());
         materia.setAtiva(true);
 
-        materiaRepository.save(materia);
-        return new DadosDetalhamentoMateria(materia);
+        var materiaSalva = materiaRepository.save(materia);
+        return new DadosDetalhamentoMateria(materiaSalva);
     }
 
     public List<DadosListagemMateria> listarMateria() {
