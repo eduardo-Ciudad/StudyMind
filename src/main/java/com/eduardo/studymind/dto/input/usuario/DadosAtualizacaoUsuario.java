@@ -10,4 +10,5 @@ public record DadosAtualizacaoUsuario(
 
         String senha
 ) {
+
 }
