@@ -23,6 +23,8 @@ public class ResultadoService {
     private final QuestaoRepository questaoRepository;
     private final UsuarioRepository usuarioRepository;
 
+
+    @Transactional
     public DadosDetalhamentoResultado cadastrar(DadosCadastroResultado dados){
         var usuario = usuarioRepository.findById(dados.usuarioId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado"));

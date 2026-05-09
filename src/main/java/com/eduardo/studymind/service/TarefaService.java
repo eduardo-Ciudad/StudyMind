@@ -43,7 +43,7 @@ public class TarefaService {
         tarefa.setTipo(dados.tipo());
         tarefa.setDescricao(dados.descricao());
         tarefa.setMeta(dados.meta());
-        tarefa.setPrazo(dados.time());
+        tarefa.setPrazo(dados.prazo());
         tarefa.setStatus(TarefaStatus.PENDENTE);
 
         var tarefaSalva = tarefaRepository.save(tarefa);
@@ -68,7 +68,7 @@ public class TarefaService {
         var tarefa = tarefaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Tarefa não encontrada"));
         if (tarefa.getStatus() == TarefaStatus.CONCLUIDA || tarefa.getStatus() == TarefaStatus.CANCELADA) {
-            throw new RegrasDeNegocioException("Não é possivel atualizar a tarefa" + tarefa.getStatus().name().toLowerCase(Locale.ROOT));
+            throw new RegrasDeNegocioException("Não é possivel atualizar a tarefa com status: " + tarefa.getStatus().name().toLowerCase(Locale.ROOT));
         }
 
 
@@ -86,7 +86,7 @@ public class TarefaService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Tarefa nao encontrada"));
 
         if (tarefa.getStatus() == TarefaStatus.CONCLUIDA) {
-            throw new RegrasDeNegocioException("Não é possivel cancelar uma tarefa já cadastrada");
+            throw new RegrasDeNegocioException("Não é possivel cancelar uma tarefa já concluída");
         }
 
         tarefa.setStatus(TarefaStatus.CANCELADA);

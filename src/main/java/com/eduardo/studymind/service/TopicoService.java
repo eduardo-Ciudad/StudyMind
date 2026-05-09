@@ -41,10 +41,21 @@ public class TopicoService {
         return new DadosDetalhamentoTopico(topicoSalvo);
     }
 
-    public List<DadosListagemTopico> listarTopicos(Long materiaID) {
+    public List<DadosListagemTopico> listarTopicos(Long materiaId) {
 
-        return topicoRepository.findAllByAtivoTrue()
-                .stream()
+
+        // Se materiaId foi informado, busca apenas os tópicos
+        // daquela matéria e que estejam ativos.
+        //
+        // Se materiaId for null, busca todos os tópicos ativos.
+        List<Topico> topicos = (materiaId != null)
+                ? topicoRepository.findAllByMateriaIdAndAtivoTrue(materiaId)   // esse ? e : é umamaneira simples de escrever if e else
+                : topicoRepository.findAllByAtivoTrue();                       // (condição) ? seSim : seNao
+
+
+        // Converte cada entidade Topico em um DTO de saída
+        // (DadosListagemTopico) e retorna a lista final.
+        return topicos.stream()
                 .map(DadosListagemTopico::new)
                 .toList();
     }

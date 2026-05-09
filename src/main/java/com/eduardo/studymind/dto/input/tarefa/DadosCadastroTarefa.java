@@ -25,6 +25,6 @@ public record DadosCadastroTarefa(
         @Positive
         Integer meta,
 
-        LocalDate time
+        LocalDate prazo
 ) {
 }
