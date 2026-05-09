@@ -11,6 +11,7 @@ import com.eduardo.studymind.exception.RegrasDeNegocioException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ import java.util.List;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public DadosDetalhamentoUsuario cadastrarUsuario(DadosCadastroUsuario dados){
@@ -31,8 +33,7 @@ public class UsuarioService {
         var usuario = new Usuario();
         usuario.setNome(dados.nome());
         usuario.setEmail(dados.email());
-        // criptografar a senha com springSecurity
-        usuario.setSenha(dados.senha());
+        usuario.setSenha(passwordEncoder.encode(dados.senha()));
         usuario.setRole(dados.role());
         usuario.setAtivo(true);
 
