@@ -1,5 +1,6 @@
 package com.eduardo.studymind.service;
 
+import com.eduardo.studymind.domain.usuario.Role;
 import com.eduardo.studymind.domain.usuario.Usuario;
 import com.eduardo.studymind.domain.usuario.UsuarioRepository;
 import com.eduardo.studymind.dto.input.usuario.DadosAtualizacaoUsuario;
@@ -34,7 +35,7 @@ public class UsuarioService {
         usuario.setNome(dados.nome());
         usuario.setEmail(dados.email());
         usuario.setSenha(passwordEncoder.encode(dados.senha()));
-        usuario.setRole(dados.role());
+        usuario.setRole(Role.ALUNO);
         usuario.setAtivo(true);
 
         var usuarioSalvo = usuarioRepository.save(usuario);

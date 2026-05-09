@@ -5,10 +5,12 @@ import com.eduardo.studymind.dto.input.tarefa.DadosAtualizacaoTarefa;
 import com.eduardo.studymind.dto.input.tarefa.DadosCadastroTarefa;
 import com.eduardo.studymind.dto.output.tarefa.DadosDetalhamentoTarefa;
 import com.eduardo.studymind.dto.output.tarefa.DadosListagemTarefa;
+import com.eduardo.studymind.infra.security.Utils.SecurityUtils;
 import com.eduardo.studymind.service.TarefaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,7 +39,10 @@ public class TarefaController {
     @GetMapping("/usuario/{usuarioId}")
     public ResponseEntity<List<DadosListagemTarefa>> listarPorUsuario(
             @PathVariable Long usuarioId,
-            @RequestParam(required = false) TarefaStatus status) {
+            @RequestParam(required = false) TarefaStatus status,
+            Authentication authentication) {
+
+        SecurityUtils.verificarOwnership(usuarioId, authentication);
         return ResponseEntity.ok(tarefaService.listarPorUsuario(usuarioId, status));
     }
 

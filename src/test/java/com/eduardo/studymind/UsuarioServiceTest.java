@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 
 import java.util.Optional;
@@ -30,19 +31,22 @@ class UsuarioServiceTest {
     @Mock
     private UsuarioRepository usuarioRepository;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private UsuarioService usuarioService;
 
     @Test
     @DisplayName("Deve cadastrar usuario e retornar detalhamento")
     void cadastrarUsuario_sucesso() {
-        var dados = new DadosCadastroUsuario("Eduardo", "edu@email.com", "senha123", Role.ALUNO);
-
+        var dados = new DadosCadastroUsuario("Eduardo", "edu@email.com", "senha123");
         var usuarioSalvo = new Usuario();
         usuarioSalvo.setId(1L);
         usuarioSalvo.setNome("Eduardo");
         usuarioSalvo.setEmail("edu@email.com");
         usuarioSalvo.setAtivo(true);
+        when(passwordEncoder.encode("senha123")).thenReturn("$2a$senha_hasheada");
 
         when(usuarioRepository.existsByEmail("edu@email.com")).thenReturn(false);
         when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioSalvo);
@@ -57,8 +61,7 @@ class UsuarioServiceTest {
     @Test
     @DisplayName("Deve lançar exceção ao cadastrar usuario com email duplicado")
     void cadastrarUsuario_emailDuplicado() {
-        var dados = new DadosCadastroUsuario("Eduardo", "edu@email.com", "senha123", Role.ALUNO);
-
+        var dados = new DadosCadastroUsuario("Eduardo", "edu@email.com", "senha123");
         when(usuarioRepository.existsByEmail("edu@email.com")).thenReturn(true);
 
         assertThatThrownBy(() -> usuarioService.cadastrarUsuario(dados))

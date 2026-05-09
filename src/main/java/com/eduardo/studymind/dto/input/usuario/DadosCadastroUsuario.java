@@ -5,6 +5,7 @@ import com.eduardo.studymind.domain.usuario.Usuario;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import org.apache.tomcat.util.digester.Rule;
 
 public record DadosCadastroUsuario(
@@ -17,17 +18,8 @@ public record DadosCadastroUsuario(
         String email,
 
         @NotBlank
-        String senha,
-
-        @NotNull
-        Role role
+        @Size(min = 8, message = "A senha deve ter no mínimo 8 caracteres")
+        String senha
 ) {
-    public DadosCadastroUsuario(Usuario usuario) {
-        this(
-                usuario.getNome(),
-                usuario.getEmail(),
-                usuario.getSenha(),
-                usuario.getRole()
-        );
-    }
+
 }
