@@ -12,6 +12,7 @@ import com.eduardo.studymind.service.QuestaoService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -57,9 +58,13 @@ class QuestaoServiceTest {
 
         var resultado = questaoService.cadastrar(dados);
 
+        // captura o objeto passado para o save() e verifica o enunciado
+        var captor = ArgumentCaptor.forClass(Questao.class);
+        verify(questaoRepository).save(captor.capture());
+        assertThat(captor.getValue().getEnunciado()).isEqualTo("Qual é a fórmula da água?");
+
         assertThat(resultado.id()).isEqualTo(1L);
         assertThat(resultado.enunciado()).isEqualTo("Qual é a fórmula da água?");
-        verify(questaoRepository).save(any(Questao.class));
     }
 
     @Test
