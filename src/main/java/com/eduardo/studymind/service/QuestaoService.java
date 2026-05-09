@@ -22,11 +22,12 @@ public class QuestaoService {
     private final QuestaoRepository questaoRepository;
     private final TopicoRepository topicoRepository;
 
+    @Transactional
     public DadosDetalhamentoQuestao cadastrar(DadosCadastroQuestao dados) {
         var topico = topicoRepository.findById(dados.topicoId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Tópico nao encontrado"));
         Questao questao = new Questao();
-        questao.setTopico(topico);
+        questao.setEnunciado(dados.enunciado());
         questao.setTipo(dados.tipo());
         questao.setTopico(topico);
         questao.setAtiva(true);
