@@ -7,6 +7,7 @@ import com.eduardo.studymind.dto.input.materia.DadosAtualizacaoMateria;
 import com.eduardo.studymind.dto.input.materia.DadosCadastroMateria;
 import com.eduardo.studymind.dto.output.materia.DadosDetalhamentoMateria;
 import com.eduardo.studymind.dto.output.materia.DadosListagemMateria;
+import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -40,14 +41,14 @@ public class MateriaService {
 
     public DadosDetalhamentoMateria buscarPorID(Long id) {
         var materia = materiaRepository.findById(id)
-        .orElseThrow(() -> new EntityNotFoundException("Materia nao encontrada"));
+        .orElseThrow(() -> new RecursoNaoEncontradoException("Materia nao encontrada"));
         return new DadosDetalhamentoMateria(materia);
     }
 
     @Transactional
     public DadosDetalhamentoMateria atualizarMateria (Long id, DadosAtualizacaoMateria dados) {
         var materia = materiaRepository.findById(id)
-        .orElseThrow(() -> new EntityNotFoundException("Materia nao encontrada"));
+        .orElseThrow(() -> new RecursoNaoEncontradoException("Materia nao encontrada"));
 
         if(dados.nome() != null) materia.setNome(dados.nome());
         if (dados.descricao() != null) materia.setDescricao(dados.descricao());
@@ -59,7 +60,7 @@ public class MateriaService {
     @Transactional
     public void desativarMateria(Long id) {
         var materia = materiaRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Materia nao encontrada"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Materia nao encontrada"));
         materia.setAtiva(false);
     }
 }

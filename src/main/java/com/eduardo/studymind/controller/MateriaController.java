@@ -1,6 +1,7 @@
 package com.eduardo.studymind.controller;
 
 import com.eduardo.studymind.domain.materia.MateriaRepository;
+import com.eduardo.studymind.dto.input.materia.DadosAtualizacaoMateria;
 import com.eduardo.studymind.dto.input.materia.DadosCadastroMateria;
 import com.eduardo.studymind.dto.output.materia.DadosDetalhamentoMateria;
 import com.eduardo.studymind.dto.output.materia.DadosListagemMateria;
@@ -34,6 +35,13 @@ public class MateriaController {
     @GetMapping("/{id}")
     public ResponseEntity<DadosDetalhamentoMateria> buscarPorId(@PathVariable Long id){
         return ResponseEntity.ok(materiaService.buscarPorID(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<DadosDetalhamentoMateria> atualizar(
+            @PathVariable Long id,
+            @RequestBody @Valid DadosAtualizacaoMateria dados) {
+        return ResponseEntity.ok(materiaService.atualizarMateria(id,dados));
     }
 
     @DeleteMapping("/{id}")
