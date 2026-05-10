@@ -9,6 +9,7 @@ import com.eduardo.studymind.dto.output.performace.DadosDesempenhoTopico;
 import com.eduardo.studymind.dto.output.performace.DadosDesempenhoUsuario;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 
@@ -16,14 +17,14 @@ import static java.util.stream.Collectors.toList;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PerformanceAnalyzerService {
 
     private final ResultadoRepository resultadoRepository;
     private final TopicoRepository topicoRepository;
 
     public DadosDesempenhoUsuario analisarDesempenho(Long usuarioId) {
-        var topicosAtivos = topicoRepository.findAllByAtivoTrue();
-
+        var topicosAtivos = topicoRepository.findAllByAtivoTrueWithMateria();
         var desempenhoPorTopico = topicosAtivos.stream()
                 .map(topico -> calcularDesempenhoTopico(usuarioId, topico))
                 .filter(d -> d.totalRespostas() > 0)

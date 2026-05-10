@@ -60,8 +60,15 @@ public class RecommendationService {
 
     private DadosRecomendacao parseResposta(String respostaIA, DadosDesempenhoUsuario desempenho) {
         try {
+
+            // limpa blocos de código markdown se a IA retornar com ```json
+            var jsonLimpo = respostaIA
+                    .replaceAll("```json", "")
+                    .replaceAll("```", "")
+                    .trim();
+
             var mapper = new ObjectMapper();
-            var json = mapper.readTree(respostaIA);
+            var json = mapper.readTree(jsonLimpo);
 
             var topicosPrioritarios = new ArrayList<String>();
             json.get("topicosPrioritarios").forEach(t -> topicosPrioritarios.add(t.asText()));
