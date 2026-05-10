@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.eduardo.studymind.domain.materia.Materia;
 import com.eduardo.studymind.domain.materia.MateriaRepository;
 import com.eduardo.studymind.dto.input.materia.DadosCadastroMateria;
+import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
 import com.eduardo.studymind.service.MateriaService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.DisplayName;
@@ -109,7 +110,7 @@ class MateriaServiceTest {
 
         // then
         assertThatThrownBy(() -> materiaService.buscarPorID(99L))
-                .isInstanceOf(EntityNotFoundException.class)
+                .isInstanceOf(RecursoNaoEncontradoException.class)
                 .hasMessage("Materia nao encontrada");
     }
 
@@ -140,7 +141,7 @@ class MateriaServiceTest {
 
         // then
         assertThatThrownBy(() -> materiaService.desativarMateria(99L))
-                .isInstanceOf(EntityNotFoundException.class)
+                .isInstanceOf(RecursoNaoEncontradoException.class)
                 .hasMessage("Materia nao encontrada");
     }
 }

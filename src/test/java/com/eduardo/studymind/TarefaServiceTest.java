@@ -152,6 +152,7 @@ class TarefaServiceTest {
 
         assertThatThrownBy(() -> tarefaService.cancelar(1L))
                 .isInstanceOf(RegrasDeNegocioException.class)
-                .hasMessage("Não é possivel cancelar uma tarefa já cadastrada");
+                .hasMessage("Não é possivel cancelar uma tarefa já concluída");
+
     }
 }

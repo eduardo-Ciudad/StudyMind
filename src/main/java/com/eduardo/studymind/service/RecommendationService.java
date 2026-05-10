@@ -17,6 +17,7 @@ public class RecommendationService {
 
     private final PerformanceAnalyzerService performanceAnalyzerService;
     private final AIClient aiClient;
+    private final ObjectMapper objectMapper;
 
     public DadosRecomendacao gerarRecomendacao(Long usuarioId) {
         var desempenho = performanceAnalyzerService.analisarDesempenho(usuarioId);
@@ -67,8 +68,7 @@ public class RecommendationService {
                     .replaceAll("```", "")
                     .trim();
 
-            var mapper = new ObjectMapper();
-            var json = mapper.readTree(jsonLimpo);
+            var json = objectMapper.readTree(jsonLimpo);
 
             var topicosPrioritarios = new ArrayList<String>();
             json.get("topicosPrioritarios").forEach(t -> topicosPrioritarios.add(t.asText()));
