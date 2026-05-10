@@ -25,6 +25,7 @@ public class JwtService {
                     .withIssuer("studymind-api")
                     .withSubject(usuario.getEmail())
                     .withClaim("role", usuario.getRole().name())
+                    .withClaim("id", usuario.getId())
                     .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                     .sign(algorithm);
         } catch (JWTCreationException e) {
