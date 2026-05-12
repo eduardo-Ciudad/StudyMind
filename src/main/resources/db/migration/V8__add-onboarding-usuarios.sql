@@ -1,0 +1,2 @@
+ALTER TABLE usuarios
+ADD COLUMN onboarding_concluido BOOLEAN NOT NULL DEFAULT FALSE;
