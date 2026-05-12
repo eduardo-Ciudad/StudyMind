@@ -64,4 +64,7 @@ public class Usuario  implements UserDetails {
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime criadoEm = LocalDateTime.now();
+
+    @Column(nullable = false)
+    private Boolean onboardingConcluido = false;
 }

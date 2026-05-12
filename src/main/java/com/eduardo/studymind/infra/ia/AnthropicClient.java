@@ -25,7 +25,7 @@ public class AnthropicClient implements AIClient {
     public String gerarResposta(String prompt) {
         var requestBody = Map.of(
                 "model", MODEL,
-                "max_tokens", 1024,
+                "max_tokens", 4096,
                 "messages", List.of(
                         Map.of("role", "user", "content", prompt)
                 )
