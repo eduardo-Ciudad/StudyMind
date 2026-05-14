@@ -12,6 +12,7 @@ import com.eduardo.studymind.dto.output.onboarding.DadosStatusOnboarding;
 import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
 import com.eduardo.studymind.exception.RegrasDeNegocioException;
 import com.eduardo.studymind.infra.ia.AIClient;
+import com.eduardo.studymind.service.parser.PlanoEstudoParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ public class OnboardingService {
     private final UsuarioRepository usuarioRepository;
     private final AIClient aiClient;
     private final ObjectMapper objectMapper;
+    private final PlanoEstudoParser  planoEstudoParser;
 
     private static final String SYSTEM_PROMPT_ONBOARDING = """
             Você é um assistente educacional do StudyMind, especializado em vestibular brasileiro.
@@ -194,6 +196,7 @@ public class OnboardingService {
             plano.setVersao(versaoAtual + 1);
             plano.setAtivo(true);
             planoEstudoRepository.save(plano);
+            planoEstudoParser.parsearEPopular(usuario, json);
 
             usuario.setOnboardingConcluido(true);
             usuarioRepository.save(usuario);

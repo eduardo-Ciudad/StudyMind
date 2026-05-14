@@ -5,10 +5,12 @@ import com.eduardo.studymind.dto.input.materia.DadosAtualizacaoMateria;
 import com.eduardo.studymind.dto.input.materia.DadosCadastroMateria;
 import com.eduardo.studymind.dto.output.materia.DadosDetalhamentoMateria;
 import com.eduardo.studymind.dto.output.materia.DadosListagemMateria;
+import com.eduardo.studymind.infra.security.Utils.SecurityUtils;
 import com.eduardo.studymind.service.MateriaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -18,22 +20,28 @@ import java.util.List;
 @RequestMapping("/materias")
 @RequiredArgsConstructor
 public class MateriaController {
+
     private final MateriaService materiaService;
 
     @PostMapping
-    public ResponseEntity<DadosDetalhamentoMateria> cadastrar (@RequestBody @Valid DadosCadastroMateria dados, UriComponentsBuilder uriBuilder){
-        var materia = materiaService.cadastrarMateria(dados);
+    public ResponseEntity<DadosDetalhamentoMateria> cadastrar(
+            @RequestBody @Valid DadosCadastroMateria dados,
+            Authentication authentication,
+            UriComponentsBuilder uriBuilder) {
+        var usuario = SecurityUtils.getUsuarioAuthenticado(authentication);
+        var materia = materiaService.cadastrarMateria(dados, usuario.getId());
         var uri = uriBuilder.path("/materias/{id}").buildAndExpand(materia.id()).toUri();
         return ResponseEntity.created(uri).body(materia);
     }
 
     @GetMapping
-    public ResponseEntity<List<DadosListagemMateria>> listar(){
-        return ResponseEntity.ok(materiaService.listarMateria());
+    public ResponseEntity<List<DadosListagemMateria>> listar(Authentication authentication) {
+        var usuario = SecurityUtils.getUsuarioAuthenticado(authentication);
+        return ResponseEntity.ok(materiaService.listarMateria(usuario.getId()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DadosDetalhamentoMateria> buscarPorId(@PathVariable Long id){
+    public ResponseEntity<DadosDetalhamentoMateria> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(materiaService.buscarPorID(id));
     }
 
@@ -41,11 +49,11 @@ public class MateriaController {
     public ResponseEntity<DadosDetalhamentoMateria> atualizar(
             @PathVariable Long id,
             @RequestBody @Valid DadosAtualizacaoMateria dados) {
-        return ResponseEntity.ok(materiaService.atualizarMateria(id,dados));
+        return ResponseEntity.ok(materiaService.atualizarMateria(id, dados));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> desativar(@PathVariable Long id){
+    public ResponseEntity<Void> desativar(@PathVariable Long id) {
         materiaService.desativarMateria(id);
         return ResponseEntity.noContent().build();
     }

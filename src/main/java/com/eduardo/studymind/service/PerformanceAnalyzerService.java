@@ -24,7 +24,7 @@ public class PerformanceAnalyzerService {
     private final TopicoRepository topicoRepository;
 
     public DadosDesempenhoUsuario analisarDesempenho(Long usuarioId) {
-        var topicosAtivos = topicoRepository.findAllByAtivoTrueWithMateria();
+        var topicosAtivos = topicoRepository.findAllByAtivoTrueWithMateriaAndUsuarioId(usuarioId);
         var desempenhoPorTopico = topicosAtivos.stream()
                 .map(topico -> calcularDesempenhoTopico(usuarioId, topico))
                 .filter(d -> d.totalRespostas() > 0)
