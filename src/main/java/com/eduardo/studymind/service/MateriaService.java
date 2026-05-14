@@ -3,11 +3,13 @@ package com.eduardo.studymind.service;
 
 import com.eduardo.studymind.domain.materia.Materia;
 import com.eduardo.studymind.domain.materia.MateriaRepository;
+import com.eduardo.studymind.domain.usuario.UsuarioRepository;
 import com.eduardo.studymind.dto.input.materia.DadosAtualizacaoMateria;
 import com.eduardo.studymind.dto.input.materia.DadosCadastroMateria;
 import com.eduardo.studymind.dto.output.materia.DadosDetalhamentoMateria;
 import com.eduardo.studymind.dto.output.materia.DadosListagemMateria;
 import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
+import com.eduardo.studymind.exception.RegrasDeNegocioException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,10 +22,19 @@ import java.util.List;
 public class MateriaService {
 
     private final MateriaRepository materiaRepository;
+    private final UsuarioRepository usuarioRepository;
 
     @Transactional
-    public DadosDetalhamentoMateria cadastrarMateria (DadosCadastroMateria dados) {
+    public DadosDetalhamentoMateria cadastrarMateria(DadosCadastroMateria dados, Long usuarioId) {
+        var usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado"));
+
+        if (materiaRepository.existsByNomeAndUsuarioId(dados.nome(), usuarioId)) {
+            throw new RegrasDeNegocioException("Já existe uma matéria com esse nome");
+        }
+
         var materia = new Materia();
+        materia.setUsuario(usuario);
         materia.setNome(dados.nome());
         materia.setDescricao(dados.descricao());
         materia.setAtiva(true);
@@ -32,8 +43,8 @@ public class MateriaService {
         return new DadosDetalhamentoMateria(materiaSalva);
     }
 
-    public List<DadosListagemMateria> listarMateria() {
-        return  materiaRepository.findAllByAtivaTrue()
+    public List<DadosListagemMateria> listarMateria(Long usuarioId) {
+        return  materiaRepository.findAllByUsuarioIdAndAtivaTrue(usuarioId)
                 .stream()
                 .map(DadosListagemMateria::new)
                 .toList();

@@ -4,6 +4,7 @@ package com.eduardo.studymind.service;
 import com.eduardo.studymind.domain.materia.MateriaRepository;
 import com.eduardo.studymind.domain.topico.Topico;
 import com.eduardo.studymind.domain.topico.TopicoRepository;
+import com.eduardo.studymind.domain.usuario.UsuarioRepository;
 import com.eduardo.studymind.dto.input.topico.DadosAtualizacaoTopico;
 import com.eduardo.studymind.dto.input.topico.DadosCadastroTopico;
 import com.eduardo.studymind.dto.output.topico.DadosDetalhamentoTopico;
@@ -21,16 +22,22 @@ import java.util.List;
 public class TopicoService {
     private final TopicoRepository topicoRepository;
     private final MateriaRepository materiaRepository;
+    private final UsuarioRepository usuarioRepository;
 
     @Transactional
-    public DadosDetalhamentoTopico cadastrarTopico(DadosCadastroTopico dados) {
+    public DadosDetalhamentoTopico cadastrarTopico(DadosCadastroTopico dados, Long usuarioId) {
+        var usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado"));
+
         var materia = materiaRepository.findById(dados.materiaId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("MAtéria nao encontrada"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Matéria nao encontrada"));
 
         if (topicoRepository.existsByNomeAndMateriaId(dados.nome(), dados.materiaId())) {
-            throw new RegrasDeNegocioException("Já existe um topico com esse nome");
+            throw new RegrasDeNegocioException("Já existe um tópico com esse nome nessa matéria");
         }
+
         var topico = new Topico();
+        topico.setUsuario(usuario);
         topico.setNome(dados.nome());
         topico.setDescricao(dados.descricao());
         topico.setMateria(materia);
@@ -41,7 +48,7 @@ public class TopicoService {
         return new DadosDetalhamentoTopico(topicoSalvo);
     }
 
-    public List<DadosListagemTopico> listarTopicos(Long materiaId) {
+    public List<DadosListagemTopico> listarTopicos(Long materiaId, Long usuarioId) {
 
 
         // Se materiaId foi informado, busca apenas os tópicos
@@ -50,7 +57,7 @@ public class TopicoService {
         // Se materiaId for null, busca todos os tópicos ativos.
         List<Topico> topicos = (materiaId != null)
                 ? topicoRepository.findAllByMateriaIdAndAtivoTrue(materiaId)   // esse ? e : é umamaneira simples de escrever if e else
-                : topicoRepository.findAllByAtivoTrue();                       // (condição) ? seSim : seNao
+                : topicoRepository.findAllByUsuarioIdAndAtivoTrue(usuarioId);                       // (condição) ? seSim : seNao
 
 
         // Converte cada entidade Topico em um DTO de saída
