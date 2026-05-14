@@ -2,14 +2,14 @@
 
 ![Java](https://img.shields.io/badge/Java-17-orange?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-336791?style=for-the-badge&logo=postgresql&logoColor=white)
-![Flyway](https://img.shields.io/badge/Flyway-Migrations-CC0200?style=for-the-badge&logo=flyway&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-336791?style=for-the-badge&logo=postgresql&logoColor=white)
+![Flyway](https://img.shields.io/badge/Flyway-V1--V12-CC0200?style=for-the-badge&logo=flyway&logoColor=white)
 ![Spring Security](https://img.shields.io/badge/Spring_Security-JWT-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white)
 ![Anthropic](https://img.shields.io/badge/Anthropic-Claude_Haiku-purple?style=for-the-badge)
 ![JUnit](https://img.shields.io/badge/Tests-37_Passing-success?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Active_Development-yellow?style=for-the-badge)
 
-> AI-powered study planning platform that creates personalized study roadmaps through a conversational onboarding experience.
+> AI-powered study planning platform that creates personalized 12-week study roadmaps through a conversational onboarding experience.
 
 ---
 
@@ -26,7 +26,7 @@ The main differentiator is an **AI-driven conversational onboarding flow**. Inst
 - Daily study hours available
 - Strengths and weaknesses
 
-Based on this conversation, the system generates a **personalized study plan** and stores it in the database — ready to drive the entire study experience.
+Based on this conversation, the system generates a **personalized 12-week study plan**, parses it automatically, and populates the database with subjects, topics, and weekly tasks — no manual setup required.
 
 ---
 
@@ -37,9 +37,16 @@ Based on this conversation, the system generates a **personalized study plan** a
 - Automatic information extraction through natural dialogue
 - Detection of onboarding completion via `ONBOARDING_COMPLETO` marker
 - Structured JSON study plan generation via Claude Haiku
+- **Auto-population** of subjects, topics and tasks from the generated plan
+
+### 🔄 Study Plan Review Cycle
+- User can request a review at any time
+- AI automatically prompts a review every 3–4 weeks
+- New versioned plan generated without repeating previous content
+- Full plan history preserved in the database
 
 ### 📚 Study Management
-- Subject (`Materia`) and Topic (`Topico`) management
+- Subject (`Materia`) and Topic (`Topico`) management per user
 - Question (`Questao`) registration with multiple types
 - Result (`Resultado`) tracking per student
 - Task (`Tarefa`) generation with priorities and deadlines
@@ -51,11 +58,11 @@ Based on this conversation, the system generates a **personalized study plan** a
 - Motivational insights and practical tips
 
 ### 🔐 Security
-- JWT authentication (stateless)
+- JWT authentication (stateless, 2h expiry)
 - BCrypt password hashing
 - Ownership verification — users can only access their own data
 - CORS configured for frontend integration
-- Role-based authorization
+- Role-based authorization (ADMIN / ALUNO)
 
 ### 🧪 Testing
 - 37 automated test scenarios
@@ -77,6 +84,7 @@ Controller → Service → Repository
 - Soft delete pattern across all entities
 - Pagination on high-volume endpoints
 - Dependency inversion for AI provider (swap Claude for GPT without changing business logic)
+- Per-user data isolation — subjects and topics are scoped to each user
 
 ---
 
@@ -94,6 +102,7 @@ AIClient (interface)
 | Service | Responsibility |
 |---|---|
 | `OnboardingService` | Conversational data collection + roadmap generation |
+| `PlanoEstudoParser` | Parses AI-generated JSON and populates the database |
 | `PerformanceAnalyzerService` | Accuracy analysis by topic and subject |
 | `RecommendationService` | Personalized study recommendations |
 
@@ -108,11 +117,17 @@ Chat with AI (persistent history)
       ↓
 AI collects: exam, date, subjects, level, hours, strengths/weaknesses
       ↓
-AI emits: ONBOARDING_COMPLETO + JSON roadmap
+AI emits: ONBOARDING_COMPLETO + structured JSON roadmap (12 weeks)
       ↓
-System saves study plan in plano_estudo
+System saves study plan in plano_estudo (versao=1, ativo=true)
       ↓
-[Next phase] Auto-create subjects, topics and tasks from plan
+PlanoEstudoParser auto-creates subjects, topics and weekly tasks
+      ↓
+[Review cycle] User triggers review or AI prompts every 3-4 weeks
+      ↓
+AI generates new versioned plan (versao++) without repeating content
+      ↓
+Previous plan preserved in history for AI context
 ```
 
 ---
@@ -121,13 +136,13 @@ System saves study plan in plano_estudo
 
 ```text
 Usuario
- ├── ChatMensagem       ← onboarding conversation history
- ├── PlanoEstudo        ← AI-generated study plan (JSON)
+ ├── ChatMensagem       ← onboarding/review conversation history
+ ├── PlanoEstudo        ← AI-generated study plan (versioned JSON)
  ├── Resultado          ← question answers and scores
- └── Tarefa             ← study tasks
-      └── Topico
-           ├── Questao
-           └── Materia
+ ├── Tarefa             ← study tasks (auto-generated from plan)
+ ├── Materia            ← subjects (per user, auto-created from plan)
+ └── Topico             ← topics (per user, auto-created from plan)
+      └── Questao       ← questions linked to topics
 ```
 
 ---
@@ -138,9 +153,9 @@ Usuario
 |---|---|
 | Language | Java 17 |
 | Framework | Spring Boot 3.5 |
-| Database | PostgreSQL 18 |
+| Database | PostgreSQL 17 |
 | ORM | Spring Data JPA / Hibernate |
-| Migrations | Flyway (V1–V10) |
+| Migrations | Flyway (V1–V12) |
 | Security | Spring Security + Auth0 JWT |
 | AI Integration | Anthropic Claude Haiku via RestClient |
 | Validation | Jakarta Bean Validation |
@@ -154,7 +169,7 @@ Usuario
 
 ```text
 src/main/java/com/eduardo/studymind/
-├── controller/          ← HTTP layer (11 controllers)
+├── controller/          ← HTTP layer (12 controllers)
 ├── domain/              ← JPA entities + repositories (per aggregate)
 │   ├── chat/
 │   ├── materia/
@@ -171,10 +186,11 @@ src/main/java/com/eduardo/studymind/
 ├── infra/
 │   ├── ia/              ← AIClient interface + AnthropicClient
 │   └── security/        ← AuthFilter, JwtService, SecurityConfig, SecurityUtils
-└── service/             ← Business logic (8 services)
+└── service/             ← Business logic (9 services)
+    └── parser/          ← PlanoEstudoParser
 
 src/main/resources/
-├── db/migration/        ← Flyway scripts V1–V10
+├── db/migration/        ← Flyway scripts V1–V12
 ├── application.properties
 ├── application-dev.properties
 └── application-prod.properties
@@ -193,13 +209,14 @@ src/main/resources/
 ### 💬 Onboarding
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/onboarding/mensagem/{usuarioId}` | Send message to AI chat |
 | GET | `/onboarding/status/{usuarioId}` | Check onboarding completion |
+| POST | `/onboarding/mensagem/{usuarioId}` | Send message to AI onboarding chat |
+| POST | `/onboarding/review/{usuarioId}` | Send message to AI review chat |
 
 ### 📋 Study Plan
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/plano-estudo/usuario/{usuarioId}` | Get AI-generated study plan |
+| GET | `/plano-estudo/usuario/{usuarioId}` | Get current active study plan |
 
 ### 📊 AI Insights
 | Method | Endpoint | Description |
@@ -216,6 +233,8 @@ src/main/resources/
 | GET/POST/PUT/DELETE | `/questoes` | Question management |
 | GET/POST | `/resultados` | Answer tracking |
 | GET/POST/PUT/DELETE | `/tarefas` | Task management |
+
+> All endpoints except `/auth/**` require a valid JWT token in the `Authorization: Bearer <token>` header.
 
 ---
 
@@ -243,15 +262,17 @@ CREATE DATABASE studymind;
 
 ### Configure Environment Variables
 
-Set the following environment variables (or configure in your IDE):
+Copy `.env.example` to `.env` and fill in your values:
 
 ```bash
 DB_URL=jdbc:postgresql://localhost:5432/studymind
 DB_USERNAME=postgres
 DB_PASSWORD=your_password
-JWT_SECRET=your_jwt_secret_key
+JWT_SECRET=your_jwt_secret_key_min_32_chars
 ANTHROPIC_API_KEY=your_anthropic_api_key
 ```
+
+If using IntelliJ IDEA, configure these under `Run > Edit Configurations > Environment Variables`.
 
 ### Run the Application
 
@@ -259,7 +280,7 @@ ANTHROPIC_API_KEY=your_anthropic_api_key
 ./mvnw spring-boot:run
 ```
 
-Flyway will automatically apply all migrations on startup.
+Flyway will automatically apply all 12 migrations on startup.
 
 ### Run Tests
 
@@ -272,36 +293,38 @@ Flyway will automatically apply all migrations on startup.
 ## 🗺️ Roadmap
 
 ### ✅ Completed
-- [x] Core domain model (6 entities)
+- [x] Core domain model (8 entities)
 - [x] Full CRUD REST APIs
 - [x] JWT authentication + BCrypt
 - [x] Global exception handling
-- [x] Database indexing
-- [x] AI integration with Anthropic
+- [x] Database indexing (V7)
+- [x] Per-user data isolation for subjects and topics (V12)
+- [x] AI integration with Anthropic Claude Haiku
 - [x] Performance analysis engine
-- [x] Personalized recommendations
-- [x] Conversational onboarding
-- [x] Study plan persistence
+- [x] Personalized AI recommendations
+- [x] Conversational onboarding (12-week plan)
+- [x] Auto-population of subjects, topics and tasks from AI plan
+- [x] Study plan versioning and review cycle
 - [x] 37 automated tests
 - [x] Swagger/OpenAPI documentation
 
 ### 🔄 In Progress
-- [ ] Parse generated JSON plan into entities automatically
-- [ ] Auto-create subjects, topics and weekly tasks from onboarding plan
-- [ ] Rebuild frontend connected to the real API
+- [ ] Tests for `OnboardingService` and `PlanoEstudoParser`
+- [ ] Frontend prototype connected to the real API
 
 ### 🔮 Future
 - [ ] Docker + docker-compose
 - [ ] CI/CD pipeline
+- [ ] Refresh token support
 - [ ] Notifications and reminders
 - [ ] Spaced repetition scheduler
-- [ ] Multi-provider AI support
+- [ ] Multi-provider AI support (OpenAI, Gemini)
 
 ---
 
 ## 🎯 Project Goal
 
-The ultimate goal of StudyMind is for a student to simply answer a few questions in a natural chat and receive a **complete personalized study structure generated automatically by AI** — no manual setup required.
+The ultimate goal of StudyMind is for a student to simply answer a few questions in a natural chat and receive a **complete personalized study structure generated automatically by AI** — subjects, topics, and 12 weeks of tasks created instantly, with a review cycle that adapts the plan as the student progresses.
 
 ---
 
@@ -309,7 +332,7 @@ The ultimate goal of StudyMind is for a student to simply answer a few questions
 
 **Eduardo Ciudad Figueredo** — Backend Java Developer
 
-[![GitHub](https://img.shields.io/badge/GitHub-eduardo-Ciudad-181717?style=flat&logo=github)](https://github.com/educiudad)
+[![GitHub](https://img.shields.io/badge/GitHub-eduardo-Ciudad-181717?style=flat&logo=github)](https://github.com/eduardo-Ciudad)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Eduardo_Ciudad-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/eduardo-ciudad-figueredo/)
 
 ---

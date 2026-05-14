@@ -68,6 +68,10 @@ public class UsuarioService {
 
         if (dados.nome() != null) usuario.setNome(dados.nome());
 
+        if (dados.senha() != null && !dados.senha().isBlank()) {
+            usuario.setSenha(passwordEncoder.encode(dados.senha()));
+        }
+
         return  new DadosDetalhamentoUsuario(usuario);
     }
 
