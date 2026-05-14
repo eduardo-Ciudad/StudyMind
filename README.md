@@ -309,7 +309,7 @@ The ultimate goal of StudyMind is for a student to simply answer a few questions
 
 **Eduardo Ciudad Figueredo** — Backend Java Developer
 
-[![GitHub](https://img.shields.io/badge/GitHub-educiudad-181717?style=flat&logo=github)](https://github.com/educiudad)
+[![GitHub](https://img.shields.io/badge/GitHub-eduardo-Ciudad-181717?style=flat&logo=github)](https://github.com/educiudad)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Eduardo_Ciudad-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/eduardo-ciudad-figueredo/)
 
 ---
