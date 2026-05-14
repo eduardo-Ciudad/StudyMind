@@ -5,10 +5,13 @@ import com.eduardo.studymind.domain.materia.MateriaRepository;
 import com.eduardo.studymind.domain.topico.NivelDificuldade;
 import com.eduardo.studymind.domain.topico.Topico;
 import com.eduardo.studymind.domain.topico.TopicoRepository;
+import com.eduardo.studymind.domain.usuario.Usuario;
+import com.eduardo.studymind.domain.usuario.UsuarioRepository;
 import com.eduardo.studymind.dto.input.topico.DadosCadastroTopico;
 import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
 import com.eduardo.studymind.exception.RegrasDeNegocioException;
 import com.eduardo.studymind.service.TopicoService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,8 +39,20 @@ class TopicoServiceTest {
     @Mock
     private MateriaRepository materiaRepository;
 
+    @Mock
+    private UsuarioRepository usuarioRepository;
+
     @InjectMocks
     private TopicoService topicoService;
+
+    private Usuario usuario;
+
+    @BeforeEach
+    void setup() {
+        usuario = new Usuario();
+        usuario.setId(1L);
+        usuario.setNome("Eduardo");
+    }
 
     @Test
     @DisplayName("Deve cadastrar topico e retornar detalhamento")
@@ -55,11 +70,12 @@ class TopicoServiceTest {
         topicoSalvo.setMateria(materia);
         topicoSalvo.setAtivo(true);
 
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
         when(materiaRepository.findById(1L)).thenReturn(Optional.of(materia));
         when(topicoRepository.existsByNomeAndMateriaId("Geometria", 1L)).thenReturn(false);
         when(topicoRepository.save(any(Topico.class))).thenReturn(topicoSalvo);
 
-        var resultado = topicoService.cadastrarTopico(dados);
+        var resultado = topicoService.cadastrarTopico(dados, 1L);
 
         assertThat(resultado.id()).isEqualTo(1L);
         assertThat(resultado.nome()).isEqualTo("Geometria");
@@ -74,18 +90,18 @@ class TopicoServiceTest {
         var materia = new Materia();
         materia.setId(1L);
 
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
         when(materiaRepository.findById(1L)).thenReturn(Optional.of(materia));
         when(topicoRepository.existsByNomeAndMateriaId("Geometria", 1L)).thenReturn(true);
 
-        assertThatThrownBy(() -> topicoService.cadastrarTopico(dados))
+        assertThatThrownBy(() -> topicoService.cadastrarTopico(dados, 1L))
                 .isInstanceOf(RegrasDeNegocioException.class)
-                .hasMessage("Já existe um topico com esse nome");
+                .hasMessage("Já existe um tópico com esse nome nessa matéria");
     }
 
     @Test
-    @DisplayName("Deve retornar lista de topicos ativos")
+    @DisplayName("Deve retornar lista de topicos ativos do usuário")
     void listarTopicos_sucesso() {
-
         var materia = new Materia();
         materia.setId(1L);
         materia.setNome("Matemática");
@@ -102,9 +118,9 @@ class TopicoServiceTest {
         topico2.setAtivo(true);
         topico2.setMateria(materia);
 
-        when(topicoRepository.findAllByAtivoTrue()).thenReturn(List.of(topico1, topico2));
+        when(topicoRepository.findAllByUsuarioIdAndAtivoTrue(1L)).thenReturn(List.of(topico1, topico2));
 
-        var resultado = topicoService.listarTopicos(null);
+        var resultado = topicoService.listarTopicos(null, 1L);
 
         assertThat(resultado).hasSize(2);
         assertThat(resultado.get(0).nome()).isEqualTo("Geometria");
