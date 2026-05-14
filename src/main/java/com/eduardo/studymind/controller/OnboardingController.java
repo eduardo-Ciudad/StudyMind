@@ -38,4 +38,15 @@ public class OnboardingController {
         SecurityUtils.verificarOwnership(usuarioId, authentication);
         return ResponseEntity.ok(onboardingService.enviarMensagem(usuarioId, dados.mensagem()));
     }
+
+    @PostMapping("/review/{usuarioId}")
+    public ResponseEntity<DadosRespostaChat> enviarMensagemReview(
+            @PathVariable Long usuarioId,
+            @RequestBody @Valid DadosMensagemChat dados,
+            Authentication authentication
+    ) {
+        SecurityUtils.verificarOwnership(usuarioId, authentication);
+        return ResponseEntity.ok(onboardingService.enviarMensagemReview(usuarioId, dados.mensagem()));
+    }
+
 }
