@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class PlanoEstudoService {
@@ -15,8 +17,23 @@ public class PlanoEstudoService {
 
     @Transactional(readOnly = true)
     public DadosPlanoEstudo buscarPorUsuario(Long usuarioId) {
-        var plano = planoEstudoRepository.findByUsuarioId(usuarioId)
+        var plano = planoEstudoRepository.findByUsuarioIdAndAtivoTrue(usuarioId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Plano de estudo não encontrado"));
-        return new DadosPlanoEstudo(plano.getId(), plano.getUsuario().getId(), plano.getConteudoJson(), plano.getCriadoEm());
+        return new DadosPlanoEstudo(plano.getId(), plano.getUsuario().getId(), plano.getConteudoJson(), plano.getVersao(), plano.getCriadoEm());
     }
+
+    @Transactional
+    public List<DadosPlanoEstudo> buscarHistoricoPorUsuario(Long usuarioId) {
+        return planoEstudoRepository.findAllByUsuarioIdOrderByVersaoAsc(usuarioId)
+                .stream()
+                .map(p -> new DadosPlanoEstudo(p.getId(), p.getUsuario().getId(), p.getConteudoJson(), p.getVersao(), p.getCriadoEm()))
+                .toList();
+    }
+
+    @Transactional
+    public void desativarPlanoEstudo(Long usuarioId) {
+        planoEstudoRepository.findByUsuarioIdAndAtivoTrue(usuarioId)
+                .ifPresent(plano -> plano.setAtivo(false));
+    //O método ifPresent executa a ação apenas se o Optional contiver um valor.
+        }
 }

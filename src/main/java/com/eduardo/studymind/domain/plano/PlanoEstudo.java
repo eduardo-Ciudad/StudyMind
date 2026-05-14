@@ -22,12 +22,18 @@ public class PlanoEstudo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "usuario_id", nullable = false, unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String conteudoJson;
+
+    @Column(nullable = false)
+    private Integer versao;
+
+    @Column(nullable = false)
+    private Boolean ativo;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime criadoEm = LocalDateTime.now();

@@ -6,5 +6,6 @@ public record DadosPlanoEstudo(
         Long id,
         Long usuarioId,
         String conteudoJson,
+        Integer versao,
         LocalDateTime criadoEm
 ) {}
