@@ -50,6 +50,7 @@ public class TarefaService {
         return new DadosDetalhamentoTarefa(tarefaSalva);
     }
 
+    @Transactional(readOnly = true)
     public List<DadosListagemTarefa> listarPorUsuario(Long usuarioId, TarefaStatus status) {
         if (status != null) {
             return tarefaRepository.findAllByUsuarioIdAndStatus(usuarioId, status)
