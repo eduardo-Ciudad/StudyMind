@@ -3,6 +3,7 @@ package com.eduardo.studymind.service;
 import com.eduardo.studymind.domain.tarefa.Tarefa;
 import com.eduardo.studymind.domain.tarefa.TarefaRepository;
 import com.eduardo.studymind.dto.output.tarefadescricaooutput.DadosTarefaDescricao;
+import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
 import com.eduardo.studymind.infra.ia.AIClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,8 +22,8 @@ public class TarefaDescricaoService {
     private final TarefaRepository tarefaRepository;
 
     public DadosTarefaDescricao gerarDescricao(Long tarefaId) {
-        Tarefa tarefa = tarefaRepository.findById(tarefaId)
-                .orElseThrow(() -> new EntityNotFoundException("Tarefa não encontrada"));
+        Tarefa tarefa = tarefaRepository.findByIdWithTopico(tarefaId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Tarefa não encontrada"));
 
         String prompt = """
                 Você é um assistente de estudos explicando o que o aluno deve fazer em uma tarefa.
@@ -56,8 +57,12 @@ public class TarefaDescricaoService {
 
     private DadosTarefaDescricao parseDescricaoJson(String json) {
         try {
+            String jsonLimpo = json.trim()
+                    .replaceAll("(?s)```json\\s*", "")
+                    .replaceAll("(?s)```\\s*", "")
+                    .trim();
             ObjectMapper mapper = new ObjectMapper();
-            JsonNode node = mapper.readTree(json);
+            JsonNode node = mapper.readTree(jsonLimpo);
             List<String> passos = new ArrayList<>();
             node.get("passos").forEach(p -> passos.add(p.asText()));
             return new DadosTarefaDescricao(

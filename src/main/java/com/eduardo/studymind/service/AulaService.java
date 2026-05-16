@@ -26,6 +26,8 @@ public class AulaService {
         Topico topico = topicoRepository.findById(topicoId)
                 .orElseThrow(() -> new EntityNotFoundException("Tópico não encontrado"));
 
+
+
         String prompt = """
                 Você é um professor especialista preparando material de estudo personalizado.
                 
@@ -56,6 +58,7 @@ public class AulaService {
     public DadosQuestoesOutput gerarQuestoes(Long topicoId, int quantidade) {
         Topico topico = topicoRepository.findById(topicoId)
                 .orElseThrow(() -> new EntityNotFoundException("Tópico não encontrado"));
+
 
         String prompt = """
                 Você é um professor criando questões de revisão para vestibular/ENEM.
@@ -95,8 +98,12 @@ public class AulaService {
 
     private DadosAulaOutput parseAulaJson(String json) {
         try {
+            String jsonLimpo = json.trim()
+                    .replaceAll("(?s)```json\\s*", "")
+                    .replaceAll("(?s)```\\s*", "")
+                    .trim();
             ObjectMapper mapper = new ObjectMapper();
-            JsonNode node = mapper.readTree(json);
+            JsonNode node = mapper.readTree(jsonLimpo);
             List<String> recomendacoes = new ArrayList<>();
             node.get("recomendacoes").forEach(r -> recomendacoes.add(r.asText()));
             return new DadosAulaOutput(
@@ -113,8 +120,12 @@ public class AulaService {
 
     private DadosQuestoesOutput parseQuestoesJson(String json) {
         try {
+            String jsonLimpo = json.trim()
+                    .replaceAll("(?s)```json\\s*", "")
+                    .replaceAll("(?s)```\\s*", "")
+                    .trim();
             ObjectMapper mapper = new ObjectMapper();
-            JsonNode node = mapper.readTree(json);
+            JsonNode node = mapper.readTree(jsonLimpo);
             List<DadosQuestaoGerada> questoes = new ArrayList<>();
             node.get("questoes").forEach(q -> {
                 List<String> alternativas = new ArrayList<>();
