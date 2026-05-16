@@ -34,4 +34,22 @@ public class AulaController {
     public ResponseEntity<DadosTarefaDescricao> gerarDescricaoTarefa(@PathVariable Long tarefaId) {
         return ResponseEntity.ok(tarefaDescricaoService.gerarDescricao(tarefaId));
     }
+
+    @GetMapping("/topico/por-nome/conteudo")
+    public ResponseEntity<DadosAulaOutput> gerarConteudoPorNome(
+            @RequestParam String topicoNome,
+            @RequestParam String materiaNome,
+            @RequestParam String nivel
+    ) {
+        return ResponseEntity.ok(aulaService.gerarConteudoPorNome(topicoNome, materiaNome, nivel));
+    }
+
+    @GetMapping("/topico/por-nome/questoes")
+    public ResponseEntity<DadosQuestoesOutput> gerarQuestoesPorNome(
+            @RequestParam String topicoNome,
+            @RequestParam String materiaNome,
+            @RequestParam(defaultValue = "5") int quantidade
+    ) {
+        return ResponseEntity.ok(aulaService.gerarQuestoesPorNome(topicoNome, materiaNome, quantidade));
+    }
 }
