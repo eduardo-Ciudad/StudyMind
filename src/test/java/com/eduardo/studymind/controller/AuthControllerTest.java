@@ -5,7 +5,7 @@ import com.eduardo.studymind.domain.usuario.Usuario;
 import com.eduardo.studymind.dto.input.login.DadosLogin;
 import com.eduardo.studymind.dto.input.usuario.DadosCadastroUsuario;
 import com.eduardo.studymind.dto.output.usuario.DadosDetalhamentoUsuario;
-import com.eduardo.studymind.infra.security.JwtService.JwtService;
+import com.eduardo.studymind.infra.security.JwtService;
 import com.eduardo.studymind.service.UsuarioService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;

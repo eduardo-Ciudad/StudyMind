@@ -3,6 +3,7 @@ package com.eduardo.studymind.service;
 
 import com.eduardo.studymind.dto.output.performace.DadosDesempenhoUsuario;
 import com.eduardo.studymind.dto.output.recomendacao.DadosRecomendacao;
+import com.eduardo.studymind.exception.ErroIntegracaoIAException;
 import com.eduardo.studymind.infra.ia.AIClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -85,7 +86,7 @@ public class RecommendationService {
                     desempenho.taxaAcertoGeral()
             );
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao processar resposta da IA", e);
+            throw new ErroIntegracaoIAException("Erro ao processar resposta da IA", e);
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.eduardo.studymind.infra.security.Utils;
+package com.eduardo.studymind.infra.security;
 
 import com.eduardo.studymind.domain.usuario.Usuario;
 import org.springframework.http.HttpStatus;

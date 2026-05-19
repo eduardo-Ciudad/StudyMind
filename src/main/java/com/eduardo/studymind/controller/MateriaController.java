@@ -1,11 +1,10 @@
 package com.eduardo.studymind.controller;
 
-import com.eduardo.studymind.domain.materia.MateriaRepository;
 import com.eduardo.studymind.dto.input.materia.DadosAtualizacaoMateria;
 import com.eduardo.studymind.dto.input.materia.DadosCadastroMateria;
 import com.eduardo.studymind.dto.output.materia.DadosDetalhamentoMateria;
 import com.eduardo.studymind.dto.output.materia.DadosListagemMateria;
-import com.eduardo.studymind.infra.security.Utils.SecurityUtils;
+import com.eduardo.studymind.infra.security.SecurityUtils;
 import com.eduardo.studymind.service.MateriaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

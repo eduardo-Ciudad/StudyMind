@@ -6,7 +6,7 @@ import com.eduardo.studymind.dto.input.login.DadosLogin;
 import com.eduardo.studymind.dto.input.usuario.DadosCadastroUsuario;
 import com.eduardo.studymind.dto.output.jwt.DadosTokenJwt;
 import com.eduardo.studymind.dto.output.usuario.DadosDetalhamentoUsuario;
-import com.eduardo.studymind.infra.security.JwtService.JwtService;
+import com.eduardo.studymind.infra.security.JwtService;
 import com.eduardo.studymind.service.UsuarioService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

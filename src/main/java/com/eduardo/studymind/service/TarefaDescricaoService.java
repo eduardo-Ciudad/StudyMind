@@ -3,6 +3,7 @@ package com.eduardo.studymind.service;
 import com.eduardo.studymind.domain.tarefa.Tarefa;
 import com.eduardo.studymind.domain.tarefa.TarefaRepository;
 import com.eduardo.studymind.dto.output.tarefadescricaooutput.DadosTarefaDescricao;
+import com.eduardo.studymind.exception.ErroIntegracaoIAException;
 import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
 import com.eduardo.studymind.infra.ia.AIClient;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -71,7 +72,7 @@ public class TarefaDescricaoService {
                     passos
             );
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao processar resposta da IA para tarefa", e);
+            throw new ErroIntegracaoIAException("Erro ao processar resposta da IA para tarefa", e);
         }
     }
 }

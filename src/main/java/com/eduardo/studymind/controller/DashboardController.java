@@ -1,7 +1,7 @@
 package com.eduardo.studymind.controller;
 
 import com.eduardo.studymind.dto.output.performace.DadosDesempenhoUsuario;
-import com.eduardo.studymind.infra.security.Utils.SecurityUtils;
+import com.eduardo.studymind.infra.security.SecurityUtils;
 import com.eduardo.studymind.service.PerformanceAnalyzerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

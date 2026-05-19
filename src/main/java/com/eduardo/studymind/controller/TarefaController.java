@@ -5,7 +5,7 @@ import com.eduardo.studymind.dto.input.tarefa.DadosAtualizacaoTarefa;
 import com.eduardo.studymind.dto.input.tarefa.DadosCadastroTarefa;
 import com.eduardo.studymind.dto.output.tarefa.DadosDetalhamentoTarefa;
 import com.eduardo.studymind.dto.output.tarefa.DadosListagemTarefa;
-import com.eduardo.studymind.infra.security.Utils.SecurityUtils;
+import com.eduardo.studymind.infra.security.SecurityUtils;
 import com.eduardo.studymind.service.TarefaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

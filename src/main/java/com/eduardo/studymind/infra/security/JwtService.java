@@ -1,4 +1,4 @@
-package com.eduardo.studymind.infra.security.JwtService;
+package com.eduardo.studymind.infra.security;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;

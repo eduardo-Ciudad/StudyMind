@@ -4,7 +4,7 @@ package com.eduardo.studymind.controller;
 import com.eduardo.studymind.dto.input.onboarding.DadosMensagemChat;
 import com.eduardo.studymind.dto.output.onboarding.DadosRespostaChat;
 import com.eduardo.studymind.dto.output.onboarding.DadosStatusOnboarding;
-import com.eduardo.studymind.infra.security.Utils.SecurityUtils;
+import com.eduardo.studymind.infra.security.SecurityUtils;
 import com.eduardo.studymind.service.OnboardingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

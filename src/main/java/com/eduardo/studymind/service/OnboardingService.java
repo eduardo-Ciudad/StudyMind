@@ -9,6 +9,7 @@ import com.eduardo.studymind.domain.usuario.Usuario;
 import com.eduardo.studymind.domain.usuario.UsuarioRepository;
 import com.eduardo.studymind.dto.output.onboarding.DadosRespostaChat;
 import com.eduardo.studymind.dto.output.onboarding.DadosStatusOnboarding;
+import com.eduardo.studymind.exception.ErroIntegracaoIAException;
 import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
 import com.eduardo.studymind.exception.RegrasDeNegocioException;
 import com.eduardo.studymind.infra.ia.AIClient;
@@ -202,7 +203,7 @@ public class OnboardingService {
             usuarioRepository.save(usuario);
 
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao processar plano de estudos", e);
+            throw new ErroIntegracaoIAException("Erro ao processar plano de estudos", e);
         }
     }
 }

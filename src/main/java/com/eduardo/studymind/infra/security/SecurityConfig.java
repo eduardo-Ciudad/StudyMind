@@ -1,6 +1,5 @@
-package com.eduardo.studymind.infra.security.SecurityConfig;
+package com.eduardo.studymind.infra.security;
 
-import com.eduardo.studymind.infra.security.AuthFilter.AuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

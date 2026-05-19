@@ -3,7 +3,7 @@ package com.eduardo.studymind.controller;
 import com.eduardo.studymind.dto.input.resultado.DadosCadastroResultado;
 import com.eduardo.studymind.dto.output.resultado.DadosDetalhamentoResultado;
 import com.eduardo.studymind.dto.output.resultado.DadosListagemResultados;
-import com.eduardo.studymind.infra.security.Utils.SecurityUtils;
+import com.eduardo.studymind.infra.security.SecurityUtils;
 import com.eduardo.studymind.service.ResultadoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

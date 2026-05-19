@@ -40,4 +40,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new DadosErro(500, "Erro interno do servidor"));
     }
+
+    @ExceptionHandler(ErroIntegracaoIAException.class)
+    public ResponseEntity<DadosErro> handleErroIA(ErroIntegracaoIAException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(new DadosErro(502, "Serviço de IA indisponível. Tente novamente em instantes."));
+    }
 }

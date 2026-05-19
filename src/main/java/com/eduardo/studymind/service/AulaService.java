@@ -5,6 +5,7 @@ import com.eduardo.studymind.domain.topico.TopicoRepository;
 import com.eduardo.studymind.dto.output.aulaoutput.DadosAulaOutput;
 import com.eduardo.studymind.dto.output.questaogerada.DadosQuestaoGerada;
 import com.eduardo.studymind.dto.output.questoesoutput.DadosQuestoesOutput;
+import com.eduardo.studymind.exception.ErroIntegracaoIAException;
 import com.eduardo.studymind.infra.ia.AIClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -185,7 +186,7 @@ public class AulaService {
                     recomendacoes
             );
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao processar resposta da IA para aula", e);
+            throw new ErroIntegracaoIAException("Erro ao processar resposta da IA para aula", e);
         }
     }
 
@@ -215,7 +216,7 @@ public class AulaService {
                     questoes
             );
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao processar resposta da IA para questões", e);
+            throw new ErroIntegracaoIAException("Erro ao processar resposta da IA para questões", e);
         }
     }
 }

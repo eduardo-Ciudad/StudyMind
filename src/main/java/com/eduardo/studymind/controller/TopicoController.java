@@ -6,7 +6,7 @@ import com.eduardo.studymind.dto.input.topico.DadosAtualizacaoTopico;
 import com.eduardo.studymind.dto.input.topico.DadosCadastroTopico;
 import com.eduardo.studymind.dto.output.topico.DadosDetalhamentoTopico;
 import com.eduardo.studymind.dto.output.topico.DadosListagemTopico;
-import com.eduardo.studymind.infra.security.Utils.SecurityUtils;
+import com.eduardo.studymind.infra.security.SecurityUtils;
 import com.eduardo.studymind.service.TopicoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -1,7 +1,5 @@
-package com.eduardo.studymind.infra.security.AuthFilter;
+package com.eduardo.studymind.infra.security;
 
-import com.eduardo.studymind.infra.security.JwtService.JwtService;
-import com.eduardo.studymind.infra.security.UserDetailsServiceImpl.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

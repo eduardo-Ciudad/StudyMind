@@ -1,4 +1,4 @@
-package com.eduardo.studymind.infra.security.UserDetailsServiceImpl;
+package com.eduardo.studymind.infra.security;
 
 import com.eduardo.studymind.domain.usuario.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
