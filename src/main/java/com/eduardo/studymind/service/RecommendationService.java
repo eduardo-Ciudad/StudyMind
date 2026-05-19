@@ -22,11 +22,15 @@ public class RecommendationService {
 
     public DadosRecomendacao gerarRecomendacao(Long usuarioId) {
         var desempenho = performanceAnalyzerService.analisarDesempenho(usuarioId);
-
-        var prompt = montarPrompt(desempenho);
-        var respostaIA = aiClient.gerarResposta(prompt);
-
-        return parseResposta(respostaIA, desempenho);
+        try {
+            var prompt = montarPrompt(desempenho);
+            var respostaIA = aiClient.gerarResposta(prompt);
+            return parseResposta(respostaIA, desempenho);
+        } catch (ErroIntegracaoIAException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ErroIntegracaoIAException("Erro ao processar resposta da IA", e);
+        }
     }
 
     private String montarPrompt(DadosDesempenhoUsuario desempenho) {
