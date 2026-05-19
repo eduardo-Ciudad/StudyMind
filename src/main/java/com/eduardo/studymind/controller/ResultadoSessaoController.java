@@ -3,6 +3,10 @@ package com.eduardo.studymind.controller;
 import com.eduardo.studymind.dto.input.resultado.DadosCadastroResultadoSessao;
 import com.eduardo.studymind.dto.output.resultado.DadosResultadoSessaoOutput;
 import com.eduardo.studymind.service.ResultadoSessaoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Resultado de Sessão", description = "Registro de resultados de sessões de estudo com questões")
 @RestController
 @RequestMapping("/resultado-sessao")
 @RequiredArgsConstructor
@@ -19,6 +24,12 @@ public class ResultadoSessaoController {
 
     private final ResultadoSessaoService service;
 
+    @Operation(summary = "Salvar resultado de sessão", description = "Registra o resultado de uma sessão de estudo com as respostas do usuário")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Resultado da sessão salvo com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos"),
+            @ApiResponse(responseCode = "401", description = "Não autenticado")
+    })
     @PostMapping
     public ResponseEntity<DadosResultadoSessaoOutput> salvar(
             @RequestBody @Valid DadosCadastroResultadoSessao dados) {

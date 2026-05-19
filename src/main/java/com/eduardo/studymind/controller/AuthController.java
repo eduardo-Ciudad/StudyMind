@@ -8,6 +8,10 @@ import com.eduardo.studymind.dto.output.jwt.DadosTokenJwt;
 import com.eduardo.studymind.dto.output.usuario.DadosDetalhamentoUsuario;
 import com.eduardo.studymind.infra.security.JwtService;
 import com.eduardo.studymind.service.UsuarioService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Autenticação", description = "Endpoints para autenticação e registro de usuários")
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -28,6 +33,12 @@ public class AuthController {
     private final JwtService jwtService;
     private final UsuarioService usuarioService;
 
+    @Operation(summary = "Realizar login", description = "Autentica o usuário com email e senha e retorna um token JWT")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Login realizado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos"),
+            @ApiResponse(responseCode = "401", description = "Credenciais inválidas")
+    })
     @PostMapping("/login")
     public ResponseEntity<DadosTokenJwt> login(@RequestBody @Valid DadosLogin dados) {
         var authToken = new UsernamePasswordAuthenticationToken(dados.email(), dados.senha());
@@ -37,6 +48,11 @@ public class AuthController {
         return ResponseEntity.ok(new DadosTokenJwt(token));
     }
 
+    @Operation(summary = "Registrar novo usuário", description = "Cria uma nova conta de usuário na plataforma")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Usuário registrado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados de entrada inválidos")
+    })
     @PostMapping("/registro")
     public ResponseEntity<DadosDetalhamentoUsuario> registrar(@RequestBody @Valid DadosCadastroUsuario dados) {
         var usuario = usuarioService.cadastrarUsuario(dados);
