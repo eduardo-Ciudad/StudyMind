@@ -60,6 +60,10 @@ public class SecurityConfig {
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
+
+        // TODO: controle de acesso por role será implementado em versão futura.
+        // Endpoints administrativos (ex: /admin/**) exigirão Role.ADMIN.
+        // Exemplo: .requestMatchers("/admin/**").hasRole("ADMIN")
         config.setAllowCredentials(true);
 
         var source = new UrlBasedCorsConfigurationSource();

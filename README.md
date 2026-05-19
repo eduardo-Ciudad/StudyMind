@@ -62,8 +62,7 @@ Based on this conversation, the system generates a **personalized 12-week study 
 - BCrypt password hashing
 - Ownership verification — users can only access their own data
 - CORS configured for frontend integration
-- Role-based authorization (ADMIN / ALUNO)
-
+- Role-based authorization (ADMIN / ALUNO) — roles defined, endpoint-level restrictions planned (see Roadmap)
 ### 🧪 Testing
 - 37 automated test scenarios
 - Unit tests with Mockito and ArgumentCaptor
@@ -340,3 +339,4 @@ The ultimate goal of StudyMind is for a student to simply answer a few questions
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
+
