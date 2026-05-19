@@ -1,7 +1,7 @@
 package com.eduardo.studymind.controller;
 
 
-import com.eduardo.studymind.domain.materia.MateriaRepository;
+
 import com.eduardo.studymind.dto.input.topico.DadosAtualizacaoTopico;
 import com.eduardo.studymind.dto.input.topico.DadosCadastroTopico;
 import com.eduardo.studymind.dto.output.topico.DadosDetalhamentoTopico;
@@ -10,12 +10,12 @@ import com.eduardo.studymind.infra.security.Utils.SecurityUtils;
 import com.eduardo.studymind.service.TopicoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.w3c.dom.stylesheets.LinkStyle;
+
 
 import java.util.List;
 @RestController
