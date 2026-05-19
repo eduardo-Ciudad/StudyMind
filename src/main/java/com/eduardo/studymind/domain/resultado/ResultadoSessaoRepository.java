@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface ResultadoSessaoRepository extends JpaRepository<ResultadoSessao, Long> {
     List<ResultadoSessao> findByUsuarioIdOrderByRespondidoEmDesc(Long usuarioId);
+    List<ResultadoSessao> findByUsuarioId(Long usuarioId);
 }

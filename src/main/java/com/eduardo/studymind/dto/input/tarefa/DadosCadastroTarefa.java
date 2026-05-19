@@ -12,7 +12,7 @@ public record DadosCadastroTarefa(
         @NotNull
         Long usuarioId,
 
-        @NotNull
+
         Long topicoId,
 
         @NotNull

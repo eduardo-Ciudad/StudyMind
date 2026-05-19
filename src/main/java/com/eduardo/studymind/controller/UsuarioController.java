@@ -24,16 +24,6 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
-    @PostMapping
-    public ResponseEntity<DadosDetalhamentoUsuario> cadastrar(
-            @RequestBody @Valid DadosCadastroUsuario dados,
-            UriComponentsBuilder uriBuilder) {
-
-        var usuario = usuarioService.cadastrarUsuario(dados);
-        var uri = uriBuilder.path("/usuarios/{id}").buildAndExpand(usuario.id()).toUri();
-        return ResponseEntity.created(uri).body(usuario);
-    }
-
     @GetMapping
     public ResponseEntity<Page<DadosListagemUsuario>> listar(
             @PageableDefault(size = 10, sort = "nome") Pageable pageable) {

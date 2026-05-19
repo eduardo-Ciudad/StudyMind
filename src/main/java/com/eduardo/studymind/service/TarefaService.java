@@ -4,6 +4,7 @@ package com.eduardo.studymind.service;
 import com.eduardo.studymind.domain.tarefa.Tarefa;
 import com.eduardo.studymind.domain.tarefa.TarefaRepository;
 import com.eduardo.studymind.domain.tarefa.TarefaStatus;
+import com.eduardo.studymind.domain.topico.Topico;
 import com.eduardo.studymind.domain.topico.TopicoRepository;
 import com.eduardo.studymind.domain.usuario.UsuarioRepository;
 import com.eduardo.studymind.dto.input.tarefa.DadosAtualizacaoTarefa;
@@ -31,11 +32,20 @@ public class TarefaService {
     public DadosDetalhamentoTarefa cadastrar(DadosCadastroTarefa dados){
         var usuario = usuarioRepository.findById(dados.usuarioId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado"));
-        var topico = topicoRepository.findById(dados.topicoId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Topico nao encontrado"));
-        if (tarefaRepository.existsByUsuarioIdAndTopicoIdAndStatus(dados.usuarioId(), dados.topicoId(), TarefaStatus.PENDENTE)) {
+
+
+        Topico topico = null;
+        if (dados.topicoId() != null) {
+            topico = topicoRepository.findById(dados.topicoId())
+                    .orElseThrow(() -> new RecursoNaoEncontradoException("Topico nao encontrado"));
+        }
+
+        if (dados.topicoId() != null &&
+                tarefaRepository.existsByUsuarioIdAndTopicoIdAndStatus(
+                        dados.usuarioId(), dados.topicoId(), TarefaStatus.PENDENTE)) {
             throw new RegrasDeNegocioException("Já existe essa tarefa pendente para esse tópico");
         }
+
 
         var tarefa  = new Tarefa();
         tarefa.setUsuario(usuario);

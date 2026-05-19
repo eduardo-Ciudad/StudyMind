@@ -3,6 +3,8 @@ package com.eduardo.studymind.service;
 
 import com.eduardo.studymind.domain.resultado.RespostaStatus;
 import com.eduardo.studymind.domain.resultado.ResultadoRepository;
+import com.eduardo.studymind.domain.resultado.ResultadoSessao;
+import com.eduardo.studymind.domain.resultado.ResultadoSessaoRepository;
 import com.eduardo.studymind.domain.topico.Topico;
 import com.eduardo.studymind.domain.topico.TopicoRepository;
 import com.eduardo.studymind.dto.output.performace.DadosDesempenhoTopico;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -20,16 +23,44 @@ import static java.util.stream.Collectors.toList;
 @Transactional(readOnly = true)
 public class PerformanceAnalyzerService {
 
-    private final ResultadoRepository resultadoRepository;
+    private final ResultadoSessaoRepository  resultadoSessaoRepository;
     private final TopicoRepository topicoRepository;
 
+
     public DadosDesempenhoUsuario analisarDesempenho(Long usuarioId) {
-        var topicosAtivos = topicoRepository.findAllByAtivoTrueWithMateriaAndUsuarioId(usuarioId);
-        var desempenhoPorTopico = topicosAtivos.stream()
-                .map(topico -> calcularDesempenhoTopico(usuarioId, topico))
+        var sessoes = resultadoSessaoRepository.findByUsuarioId(usuarioId);
+
+        // agrupa as sessões por tópico
+        var desempenhoPorTopico = sessoes.stream()
+                .collect(Collectors.groupingBy(s -> s.getTopicoNome() + "|" + s.getMateriaNome()))
+                .entrySet().stream()
+                .map(entry -> {
+                    var sessoesDoTopico = entry.getValue();
+                    var primeira = sessoesDoTopico.get(0);
+
+                    int totalRespostas = sessoesDoTopico.stream()
+                            .mapToInt(ResultadoSessao::getTotalQuestoes)
+                            .sum();
+
+                    int totalAcertos = sessoesDoTopico.stream()
+                            .mapToInt(ResultadoSessao::getAcertos)
+                            .sum();
+
+                    double taxa = totalRespostas > 0
+                            ? (double) totalAcertos / totalRespostas * 100
+                            : 0.0;
+
+                    return new DadosDesempenhoTopico(
+                            null, // ResultadoSessao não tem topicoId
+                            primeira.getTopicoNome(),
+                            primeira.getMateriaNome(),
+                            totalRespostas,
+                            totalAcertos,
+                            taxa
+                    );
+                })
                 .filter(d -> d.totalRespostas() > 0)
                 .toList();
-
 
         int totalRespostas = desempenhoPorTopico.stream()
                 .mapToInt(DadosDesempenhoTopico::totalRespostas)
@@ -58,22 +89,5 @@ public class PerformanceAnalyzerService {
         );
     }
 
-    private DadosDesempenhoTopico calcularDesempenhoTopico(Long usuarioId, Topico topico) {
-        long total = resultadoRepository
-                .findAllByUsuarioIdAndQuestaoTopicoId(usuarioId, topico.getId()).size();
 
-        long acertos = resultadoRepository
-                .countByUsuarioIdAndQuestaoTopicoIdAndStatus(usuarioId, topico.getId(), RespostaStatus.CORRETO);
-
-        double taxa = total > 0 ? (double) acertos / total * 100 : 0.0;
-
-        return new DadosDesempenhoTopico(
-                topico.getId(),
-                topico.getNome(),
-                topico.getMateria().getNome(),
-                (int) total,
-                (int) acertos,
-                taxa
-        );
-    }
 }
