@@ -10,6 +10,8 @@ import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ResultadoSessaoService {
@@ -44,5 +46,20 @@ public class ResultadoSessaoService {
                 sessao.getTaxaAcerto(),
                 sessao.getRespondidoEm()
         );
+    }
+
+    public List<DadosResultadoSessaoOutput> listarPorUsuario(Long usuarioId) {
+        return repository.findByUsuarioIdOrderByRespondidoEmDesc(usuarioId)
+                .stream()
+                .map(s -> new DadosResultadoSessaoOutput(
+                        s.getId(),
+                        s.getTopicoNome(),
+                        s.getMateriaNome(),
+                        s.getTotalQuestoes(),
+                        s.getAcertos(),
+                        s.getTaxaAcerto(),
+                        s.getRespondidoEm()
+                ))
+                .toList();
     }
 }

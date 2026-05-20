@@ -11,10 +11,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "Resultado de Sessão", description = "Registro de resultados de sessões de estudo com questões")
 @RestController
@@ -34,5 +33,18 @@ public class ResultadoSessaoController {
     public ResponseEntity<DadosResultadoSessaoOutput> salvar(
             @RequestBody @Valid DadosCadastroResultadoSessao dados) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.salvar(dados));
+    }
+
+    @Operation(summary = "Listar resultados de sessão por usuário", description = "Retorna todas as sessões de estudo registradas do usuário")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso"),
+            @ApiResponse(responseCode = "401", description = "Não autenticado")
+    })
+
+
+    @GetMapping("/usuario/{usuarioId}")
+    public ResponseEntity<List<DadosResultadoSessaoOutput>> listarPorUsuario(
+            @PathVariable Long usuarioId) {
+        return ResponseEntity.ok(service.listarPorUsuario(usuarioId));
     }
 }
