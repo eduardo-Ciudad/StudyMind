@@ -17,7 +17,7 @@ public class SecurityUtils {
     public static void verificarOwnership(Long usuarioId, Authentication authentication) {
         var usuarioAutenticado = getUsuarioAuthenticado(authentication);
         boolean isAdmin = usuarioAutenticado.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(a -> a.getAuthority().equals("ADMIN")) ;
         //Percorre todas as permissões do usuário e verifica se alguma é "ADMIN".
 
 

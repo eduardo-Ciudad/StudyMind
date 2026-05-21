@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @Tag(name = "Plano de Estudo", description = "Consulta do plano de estudo personalizado do usuário")
 @RestController
 @RequiredArgsConstructor
@@ -36,5 +38,19 @@ public class PlanoEstudoController {
     ) {
         SecurityUtils.verificarOwnership(usuarioId, authentication);
         return ResponseEntity.ok(planoEstudoService.buscarPorUsuario(usuarioId));
+    }
+
+    @Operation(summary = "Buscar histórico de planos", description = "Retorna todos os planos de estudo do usuário ordenados por versão")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Histórico retornado com sucesso"),
+            @ApiResponse(responseCode = "401", description = "Não autenticado ou sem permissão")
+    })
+    @GetMapping("/historico")
+    public ResponseEntity<List<DadosPlanoEstudo>> getHistorico(
+            @PathVariable Long usuarioId,
+            Authentication authentication
+    ) {
+        SecurityUtils.verificarOwnership(usuarioId, authentication);
+        return ResponseEntity.ok(planoEstudoService.buscarHistoricoPorUsuario(usuarioId));
     }
 }

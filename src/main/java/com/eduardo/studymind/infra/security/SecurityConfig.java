@@ -45,13 +45,13 @@ public class SecurityConfig {
                        // .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // Rotas exclusivas de ADMIN
-                        .requestMatchers(HttpMethod.GET, "/usuarios").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/usuarios/{id}").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/usuarios/{id}").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/usuarios/{id}").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/questoes").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/questoes/{id}").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/questoes/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/usuarios").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/usuarios/{id}").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/usuarios/{id}").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/usuarios/{id}").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/questoes").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/questoes/{id}").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/questoes/{id}").hasAuthority("ADMIN")
 
                         .anyRequest().authenticated())
                 .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class);

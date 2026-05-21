@@ -183,6 +183,10 @@ public class OnboardingService {
             planoEstudoRepository.findByUsuarioIdAndAtivoTrue(usuario.getId())
                     .ifPresent(planoAtivo -> planoAtivo.setAtivo(false));
 
+            // limpa histórico de chat para o próximo ciclo começar limpo
+            chatMensagemRepository.deleteAllByUsuarioId(usuario.getId());
+
+
             // calcula próxima versão
             var versaoAtual = planoEstudoRepository
                     .findAllByUsuarioIdOrderByVersaoAsc(usuario.getId())

@@ -1,10 +1,14 @@
 package com.eduardo.studymind.infra.ia;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.net.http.HttpClient;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -18,8 +22,18 @@ public class AnthropicClient implements AIClient {
     private static final String API_URL = "https://api.anthropic.com/v1/messages";
     private static final String MODEL = "claude-haiku-4-5-20251001";
 
-    private final RestClient restClient = RestClient.create();
+    private RestClient restClient;
 
+    @PostConstruct
+    public void init() {
+        var httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(10))
+                .build();
+
+        this.restClient = RestClient.builder()
+                .requestFactory(new JdkClientHttpRequestFactory(httpClient))
+                .build();
+    }
 
     @Override
     public String gerarResposta(String prompt) {
