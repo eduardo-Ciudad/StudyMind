@@ -50,6 +50,11 @@ public class PerformanceAnalyzerService {
                             ? (double) totalAcertos / totalRespostas * 100
                             : 0.0;
 
+                    Long topicoId = topicoRepository
+                            .findByNomeAndMateriaNome(primeira.getTopicoNome(), primeira.getMateriaNome())
+                            .map(Topico::getId)
+                            .orElse(null);
+
                     return new DadosDesempenhoTopico(
                             null, // ResultadoSessao não tem topicoId
                             primeira.getTopicoNome(),

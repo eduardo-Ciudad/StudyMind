@@ -19,6 +19,8 @@ public interface TopicoRepository extends JpaRepository<Topico, Long> {
 
     boolean existsByNomeAndMateriaId(String nome, Long materiaId);
 
+    Optional<Topico> findByNomeAndMateriaNome(String nome, String materiaNome);
+
     @Query("SELECT t FROM Topico t JOIN FETCH t.materia WHERE t.ativo = true AND t.usuario.id = :usuarioId")
     List<Topico> findAllByAtivoTrueWithMateriaAndUsuarioId(@Param("usuarioId") Long usuarioId);
 }
