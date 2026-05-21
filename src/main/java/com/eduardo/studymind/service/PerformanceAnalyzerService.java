@@ -1,22 +1,18 @@
 package com.eduardo.studymind.service;
 
 
-import com.eduardo.studymind.domain.resultado.RespostaStatus;
-import com.eduardo.studymind.domain.resultado.ResultadoRepository;
 import com.eduardo.studymind.domain.resultado.ResultadoSessao;
 import com.eduardo.studymind.domain.resultado.ResultadoSessaoRepository;
 import com.eduardo.studymind.domain.topico.Topico;
 import com.eduardo.studymind.domain.topico.TopicoRepository;
-import com.eduardo.studymind.dto.output.performace.DadosDesempenhoTopico;
-import com.eduardo.studymind.dto.output.performace.DadosDesempenhoUsuario;
+import com.eduardo.studymind.dto.output.performance.DadosDesempenhoTopico;
+import com.eduardo.studymind.dto.output.performance.DadosDesempenhoUsuario;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.toList;
 
 @Service
 @RequiredArgsConstructor

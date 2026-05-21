@@ -1,6 +1,6 @@
 package com.eduardo.studymind.controller;
 
-import com.eduardo.studymind.dto.output.performace.DadosDesempenhoTopico;
+import com.eduardo.studymind.dto.output.performance.DadosDesempenhoTopico;
 import com.eduardo.studymind.infra.security.SecurityUtils;
 import com.eduardo.studymind.service.PerformanceAnalyzerService;
 import io.swagger.v3.oas.annotations.Operation;

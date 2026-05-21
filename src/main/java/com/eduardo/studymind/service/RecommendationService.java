@@ -1,7 +1,7 @@
 package com.eduardo.studymind.service;
 
 
-import com.eduardo.studymind.dto.output.performace.DadosDesempenhoUsuario;
+import com.eduardo.studymind.dto.output.performance.DadosDesempenhoUsuario;
 import com.eduardo.studymind.dto.output.recomendacao.DadosRecomendacao;
 import com.eduardo.studymind.exception.ErroIntegracaoIAException;
 import com.eduardo.studymind.infra.ia.AIClient;

@@ -108,13 +108,12 @@ class MateriaServiceTest {
     }
 
     @Test
-    @DisplayName("Deve retornar materia ao buscar por ID existente")
-    void buscarPorId_sucesso() {
+    @DisplayName("Deve desativar materia existente")
+    void desativarMateria_sucesso() {
         var materia = new Materia();
         materia.setId(1L);
         materia.setNome("Matemática");
         materia.setAtiva(true);
-
 
         when(materiaRepository.findById(1L)).thenReturn(Optional.of(materia));
 

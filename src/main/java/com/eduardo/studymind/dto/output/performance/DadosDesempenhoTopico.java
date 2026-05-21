@@ -1,4 +1,4 @@
-package com.eduardo.studymind.dto.output.performace;
+package com.eduardo.studymind.dto.output.performance;
 
 public record DadosDesempenhoTopico(
         Long topicoId,
