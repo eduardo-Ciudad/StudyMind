@@ -43,6 +43,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/registro").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
                        // .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                        // Rotas exclusivas de ADMIN
+                        .requestMatchers(HttpMethod.GET, "/usuarios").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/usuarios/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/usuarios/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/usuarios/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/questoes").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/questoes/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/questoes/{id}").hasRole("ADMIN")
+
                         .anyRequest().authenticated())
                 .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class);
 
