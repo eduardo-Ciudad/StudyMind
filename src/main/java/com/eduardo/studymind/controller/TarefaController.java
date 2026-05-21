@@ -69,7 +69,9 @@ public class TarefaController {
     @PutMapping("/{id}")
     public ResponseEntity<DadosDetalhamentoTarefa> atualizar(
             @PathVariable Long id,
-            @RequestBody @Valid DadosAtualizacaoTarefa dados) {
+            @RequestBody @Valid DadosAtualizacaoTarefa dados,
+            Authentication authentication) {
+        SecurityUtils.verificarOwnership(tarefaService.buscarDono(id), authentication);
         return ResponseEntity.ok(tarefaService.atualizarTarefa(id, dados));
     }
 
@@ -80,7 +82,8 @@ public class TarefaController {
             @ApiResponse(responseCode = "404", description = "Tarefa não encontrada")
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> cancelar(@PathVariable Long id) {
+    public ResponseEntity<Void> cancelar(@PathVariable Long id, Authentication authentication) {
+        SecurityUtils.verificarOwnership(tarefaService.buscarDono(id), authentication);
         tarefaService.cancelar(id);
         return ResponseEntity.noContent().build();
     }

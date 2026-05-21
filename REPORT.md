@@ -1,790 +1,990 @@
-# StudyMind — Relatório de Análise do Projeto
-
-> Gerado em: 2026-05-14  
-> Analisado por: Claude Code  
-> Branch: main
-
----
-
-## 1. Estrutura de Pacotes
-
-**Pacote base:** `com.eduardo.studymind`
-
-### Domain (Entidades e Repositórios)
-| Pacote | Classes |
-|--------|---------|
-| `domain.usuario` | `Usuario`, `UsuarioRepository`, `Role` (enum) |
-| `domain.materia` | `Materia`, `MateriaRepository` |
-| `domain.topico` | `Topico`, `TopicoRepository`, `NivelDificuldade` (enum) |
-| `domain.questao` | `Questao`, `QuestaoRepository`, `TipoQuestao` (enum) |
-| `domain.resultado` | `Resultado`, `ResultadoRepository`, `RespostaStatus` (enum) |
-| `domain.tarefa` | `Tarefa`, `TarefaRepository`, `TipoTarefa` (enum), `TarefaStatus` (enum) |
-| `domain.plano` | `PlanoEstudo`, `PlanoEstudoRepository` |
-| `domain.chat` | `ChatMensagem`, `ChatMensagemRepository`, `RoleChat` (enum) |
-
-### DTOs
-| Pacote | Classes |
-|--------|---------|
-| `dto.input.usuario` | `DadosCadastroUsuario`, `DadosAtualizacaoUsuario` |
-| `dto.input.login` | `DadosLogin` |
-| `dto.input.materia` | `DadosCadastroMateria`, `DadosAtualizacaoMateria` |
-| `dto.input.topico` | `DadosCadastroTopico`, `DadosAtualizacaoTopico` |
-| `dto.input.questao` | `DadosCadastroQuestao`, `DadosAtualizacaoQuestao` |
-| `dto.input.resultado` | `DadosCadastroResultado` |
-| `dto.input.tarefa` | `DadosCadastroTarefa`, `DadosAtualizacaoTarefa` |
-| `dto.input.onboarding` | `DadosMensagemChat` |
-| `dto.output.usuario` | `DadosListagemUsuario`, `DadosDetalhamentoUsuario` |
-| `dto.output.jwt` | `DadosTokenJwt` |
-| `dto.output.materia` | `DadosListagemMateria`, `DadosDetalhamentoMateria` |
-| `dto.output.topico` | `DadosListagemTopico`, `DadosDetalhamentoTopico` |
-| `dto.output.questao` | `DadosListagemQuestao`, `DadosDetalhamentoQuestao` |
-| `dto.output.resultado` | `DadosListagemResultados`, `DadosDetalhamentoResultado` |
-| `dto.output.tarefa` | `DadosListagemTarefa`, `DadosDetalhamentoTarefa` |
-| `dto.output.performace` | `DadosDesempenhoTopico`, `DadosDesempenhoUsuario` |
-| `dto.output.recomendacao` | `DadosRecomendacao` |
-| `dto.output.onboarding` | `DadosStatusOnboarding`, `DadosRespostaChat` |
-| `dto.output.plano` | `DadosPlanoEstudo` |
-| `dto.output.erros` | `DadosErro` |
-
-### Services
-`UsuarioService`, `MateriaService`, `TopicoService`, `QuestaoService`, `ResultadoService`, `TarefaService`, `PerformanceAnalyzerService`, `OnboardingService`, `PlanoEstudoService`, `RecommendationService`
-
-### Controllers
-`UsuarioController`, `AuthController`, `MateriaController`, `TopicoController`, `QuestaoController`, `ResultadoController`, `TarefaController`, `DashboardController`, `DiagnosticoController`, `RecomendacaoController`, `OnboardingController`, `PlanoEstudoController`
-
-### Infraestrutura
-| Pacote | Classes |
-|--------|---------|
-| `infra.security.JwtService` | `JwtService` |
-| `infra.security.SecurityConfig` | `SecurityConfig` |
-| `infra.security.AuthFilter` | `AuthFilter` |
-| `infra.security.UserDetailsServiceImpl` | `UserDetailsServiceImpl` |
-| `infra.security.Utils` | `SecurityUtils` |
-| `infra.ia` | `AIClient` (interface), `AnthropicClient` |
-
-### Exceções
-`GlobalExceptionHandler`, `RecursoNaoEncontradoException`, `RegrasDeNegocioException`
-
----
-
-## 2. Entidades JPA
-
-### `Usuario` → tabela `usuarios`
-| Campo Java | Coluna SQL | Tipo SQL | Constraints |
-|------------|------------|----------|-------------|
-| `id` | `id` | BIGSERIAL | PK, NOT NULL |
-| `nome` | `nome` | VARCHAR(100) | NOT NULL |
-| `email` | `email` | VARCHAR(255) | NOT NULL, UNIQUE |
-| `senha` | `senha` | VARCHAR(255) | NOT NULL |
-| `role` | `role` | VARCHAR(20) | NOT NULL, enum: ADMIN/ALUNO |
-| `ativo` | `ativo` | BOOLEAN | DEFAULT TRUE |
-| `onboardingConcluido` | `onboarding_concluido` | BOOLEAN | DEFAULT FALSE |
-| `criadoEm` | `criado_em` | TIMESTAMP | DEFAULT NOW(), updatable=false |
-
-Implementa: `UserDetails` (Spring Security)  
-Relacionamentos: nenhum (é referenciada pelas outras entidades)
-
----
-
-### `Materia` → tabela `materias`
-| Campo Java | Coluna SQL | Tipo SQL | Constraints |
-|------------|------------|----------|-------------|
-| `id` | `id` | BIGSERIAL | PK |
-| `nome` | `nome` | VARCHAR(100) | NOT NULL |
-| `descricao` | `descricao` | VARCHAR(255) | nullable |
-| `ativa` | `ativa` | BOOLEAN | DEFAULT TRUE |
-
-Relacionamentos: implícito via `Topico.materia` (OneToMany)
-
----
-
-### `Topico` → tabela `topicos`
-| Campo Java | Coluna SQL | Tipo SQL | Constraints |
-|------------|------------|----------|-------------|
-| `id` | `id` | BIGSERIAL | PK |
-| `nome` | `nome` | VARCHAR(150) | NOT NULL |
-| `descricao` | `descricao` | VARCHAR(500) | nullable |
-| `materia` | `materia_id` | BIGINT | NOT NULL, FK → materias |
-| `nivel` | `nivel` | VARCHAR(10) | NOT NULL, enum: FACIL/MEDIO/DIFICIL |
-| `ativo` | `ativo` | BOOLEAN | DEFAULT TRUE |
-
-Relacionamentos: `@ManyToOne(fetch=LAZY)` com `Materia`
-
----
-
-### `Questao` → tabela `questoes`
-| Campo Java | Coluna SQL | Tipo SQL | Constraints |
-|------------|------------|----------|-------------|
-| `id` | `id` | BIGSERIAL | PK |
-| `enunciado` | `enunciado` | VARCHAR(1000) | NOT NULL |
-| `tipo` | `tipo` | VARCHAR(20) | NOT NULL, enum: MULTIPLA_ESCOLHA/VERDADEIRO_FALSO/DISSERTATIVA |
-| `topico` | `topico_id` | BIGINT | NOT NULL, FK → topicos |
-| `ativa` | `ativa` | BOOLEAN | DEFAULT TRUE |
-
-Relacionamentos: `@ManyToOne(fetch=LAZY)` com `Topico`
-
----
-
-### `Resultado` → tabela `resultados`
-| Campo Java | Coluna SQL | Tipo SQL | Constraints |
-|------------|------------|----------|-------------|
-| `id` | `id` | BIGSERIAL | PK |
-| `usuario` | `usuario_id` | BIGINT | NOT NULL, FK → usuarios |
-| `questao` | `questao_id` | BIGINT | NOT NULL, FK → questoes |
-| `status` | `status` | VARCHAR(10) | NOT NULL, enum: CORRETO/INCORRETO/PULADO |
-| `respostaUsuario` | `resposta_usuario` | VARCHAR(1000) | nullable |
-| `respondidoEm` | `respondido_em` | TIMESTAMP | DEFAULT NOW(), updatable=false |
-
-Relacionamentos: `@ManyToOne(fetch=LAZY)` com `Usuario` e `Questao`
-
----
-
-### `Tarefa` → tabela `tarefas`
-| Campo Java | Coluna SQL | Tipo SQL | Constraints |
-|------------|------------|----------|-------------|
-| `id` | `id` | BIGSERIAL | PK |
-| `usuario` | `usuario_id` | BIGINT | NOT NULL, FK → usuarios |
-| `topico` | `topico_id` | BIGINT | nullable, FK → topicos |
-| `tipo` | `tipo` | VARCHAR(15) | NOT NULL, enum: QUESTOES/REVISAO/META_ACERTO |
-| `descricao` | `descricao` | VARCHAR(255) | NOT NULL |
-| `meta` | `meta` | INTEGER | NOT NULL |
-| `prazo` | `prazo` | DATE | nullable |
-| `status` | `status` | VARCHAR(15) | DEFAULT 'PENDENTE', enum: PENDENTE/EM_ANDAMENTO/CONCLUIDA/CANCELADA |
-| `criadaEm` | `criada_em` | TIMESTAMP | DEFAULT NOW(), updatable=false |
-
-Relacionamentos: `@ManyToOne(fetch=LAZY)` com `Usuario` (NOT NULL) e `Topico` (nullable)
-
----
-
-### `ChatMensagem` → tabela `chat_mensagens`
-| Campo Java | Coluna SQL | Tipo SQL | Constraints |
-|------------|------------|----------|-------------|
-| `id` | `id` | BIGSERIAL | PK |
-| `usuario` | `usuario_id` | BIGINT | NOT NULL, FK → usuarios |
-| `role` | `role` | VARCHAR(20) | NOT NULL, enum: USER/ASSISTANT |
-| `conteudo` | `conteudo` | TEXT | NOT NULL |
-| `criadoEm` | `criado_em` | TIMESTAMP | DEFAULT NOW(), updatable=false |
-
-Relacionamentos: `@ManyToOne(fetch=LAZY)` com `Usuario`
-
----
-
-### `PlanoEstudo` → tabela `plano_estudo`
-| Campo Java | Coluna SQL | Tipo SQL | Constraints |
-|------------|------------|----------|-------------|
-| `id` | `id` | BIGSERIAL | PK |
-| `usuario` | `usuario_id` | BIGINT | NOT NULL, UNIQUE, FK → usuarios |
-| `conteudoJson` | `conteudo_json` | TEXT | NOT NULL |
-| `criadoEm` | `criado_em` | TIMESTAMP | DEFAULT NOW(), updatable=false |
-
-Relacionamentos: `@OneToOne(fetch=LAZY)` com `Usuario` (unique)
-
----
-
-## 3. Migrações Flyway
-
-**Caminho:** `src/main/resources/db/migration`
-
-| Migração | O que faz | Consistente com Entidade? |
-|----------|-----------|--------------------------|
-| `V1__create-table-usuarios.sql` | Cria tabela `usuarios` com id, nome, email (UNIQUE), senha, role, ativo, criado_em | ✅ Sim |
-| `V2__create-table-materias.sql` | Cria tabela `materias` com id, nome, descricao, ativa | ✅ Sim |
-| `V3__crate-table-topicos.sql` | Cria tabela `topicos` com FK para materias, campo nivel (CHECK FACIL/MEDIO/DIFICIL) | ✅ Sim |
-| `V4__crate-table-questoes.sql` | Cria tabela `questoes` com FK para topicos, campo tipo (CHECK MULTIPLA_ESCOLHA/VERDADEIRO_FALSO/DISSERTATIVA) | ✅ Sim |
-| `V5__create-table-resultados.sql` | Cria tabela `resultados` com FKs para usuarios e questoes, campo status (CHECK CORRETO/INCORRETO/PULADO) | ✅ Sim |
-| `V6__crate-table-tarefas.sql` | Cria tabela `tarefas` com FKs para usuarios e topicos (nullable), tipo, meta, prazo, status | ✅ Sim |
-| `V7__create-indexes.sql` | Cria índices: idx_usuarios_email, idx_topicos_materia_id, idx_questoes_topico_id, idx_resultados_usuario_id, idx_resultados_questao_id, idx_resultados_status, idx_tarefas_usuario_id, idx_tarefas_status | ✅ Adequado |
-| `V8__add-onboarding-usuarios.sql` | Adiciona coluna `onboarding_concluido BOOLEAN DEFAULT FALSE` em usuarios | ✅ Sim |
-| `V9__crate-table-chat-mensagens.sql` | Cria tabela `chat_mensagens` com FK para usuarios, role (USER/ASSISTANT), conteudo (TEXT) | ✅ Sim |
-| `V10__create-table-plano-estudo.sql` | Cria tabela `plano_estudo` com FK UNIQUE para usuarios, conteudo_json (TEXT) | ✅ Sim |
-
-**Conclusão:** Todas as 10 migrações estão alinhadas com as entidades JPA. Nenhuma inconsistência estrutural encontrada.
-
-> **Nota:** Três arquivos têm erro de digitação no nome ("crate" em vez de "create"): V3, V4 e V9. O Flyway processa corretamente, mas o nome é incorreto.
-
----
-
-## 4. DTOs
-
-### DTOs de Input (Entrada)
-
-| DTO | Campos | Validações | Observações |
-|-----|--------|------------|-------------|
-| `DadosCadastroUsuario` | nome, email, senha | @NotBlank, @Email, @Size(min=8) | — |
-| `DadosAtualizacaoUsuario` | nome, email, senha | @Email (opcional) | ⚠️ Campo `senha` existe mas não é processado no service |
-| `DadosLogin` | email, senha | @NotBlank | — |
-| `DadosCadastroMateria` | nome, descricao | @NotBlank em nome | — |
-| `DadosAtualizacaoMateria` | nome, descricao, ativa | @NotBlank em nome | — |
-| `DadosCadastroTopico` | nome, descricao, materiaId, nivelDificuldade | @NotBlank, @NotNull | — |
-| `DadosAtualizacaoTopico` | nome, descricao, nivelDificuldade, ativo | todos opcionais | — |
-| `DadosCadastroQuestao` | enunciado, tipo, topicoId | @NotBlank, @NotNull | — |
-| `DadosAtualizacaoQuestao` | enunciado, tipo, ativa | todos opcionais | — |
-| `DadosCadastroResultado` | usuarioId, questaoId, status, respostaUsuario | @NotNull em 3 primeiros | — |
-| `DadosCadastroTarefa` | usuarioId, topicoId, tipo, descricao, meta, prazo | @NotNull, @Positive em meta | ⚠️ topicoId é @NotNull mas DB/entidade permitem null |
-| `DadosAtualizacaoTarefa` | descricao, meta, prazo, status | @Positive em meta | — |
-| `DadosMensagemChat` | mensagem | @NotNull | — |
-
-### DTOs de Output (Saída)
-
-| DTO | Campos | Observações |
-|-----|--------|-------------|
-| `DadosListagemUsuario` | id, nome, email, role, ativo | — |
-| `DadosDetalhamentoUsuario` | id, nome, email, role, ativo, criadoEm | — |
-| `DadosTokenJwt` | token | — |
-| `DadosListagemMateria` | id, nome, ativa | — |
-| `DadosDetalhamentoMateria` | id, nome, descricao, ativa | — |
-| `DadosListagemTopico` | id, nome, nivel, materia (nome), ativo | — |
-| `DadosDetalhamentoTopico` | id, nome, descricao, nivel, materiaId, materiaNome, ativo | — |
-| `DadosListagemQuestao` | id, enunciado, tipo, topicoNome, ativa | — |
-| `DadosDetalhamentoQuestao` | id, enunciado, tipo, topicoId, topicoNome, ativa | — |
-| `DadosListagemResultados` | id, questaoId, status, respondidoEm | — |
-| `DadosDetalhamentoResultado` | id, usuarioId, questaoId, questaoEnunciado, status, respostaUsuario, respondidoEm | — |
-| `DadosListagemTarefa` | id, usuarioId, usuarioNome, topicoId, topicoNome, tipo, descricao, meta, prazo, status | trata topico null com segurança |
-| `DadosDetalhamentoTarefa` | + criadaEm | trata topico null com segurança |
-| `DadosDesempenhoTopico` | topicoId, topicoNome, materiaNome, totalRespostas, totalAcertos, taxaAcerto | — |
-| `DadosDesempenhoUsuario` | usuarioId, totalRespostas, totalAcertos, taxaAcertoGeral, desempenhoPorTopico, topicosMaisFracos | — |
-| `DadosRecomendacao` | usuarioId, diagnostico, topicosPrioritarios, dicasPraticas, mensagemMotivacional, taxaAcertoGeral | — |
-| `DadosStatusOnboarding` | usuarioId, onboardingConcluido | — |
-| `DadosRespostaChat` | resposta, onboardingConcluido | — |
-| `DadosPlanoEstudo` | id, usuarioId, conteudoJson, criadoEm | — |
-| `DadosErro` | status, mensagem | — |
-
-### Desalinhamentos Identificados
-
-- `DadosAtualizacaoUsuario.senha` existe no DTO mas o `UsuarioService` nunca o processa — alteração de senha silenciosamente ignorada.
-- `DadosCadastroTarefa.topicoId` tem `@NotNull`, porém a coluna `topico_id` na tabela `tarefas` é nullable e a entidade `Tarefa` também permite null. Os DTOs de saída (`DadosListagemTarefa`, `DadosDetalhamentoTarefa`) já tratam topico nulo, criando inconsistência na regra de criação versus leitura.
-
----
-
-## 5. Services
-
-### `UsuarioService`
-**Dependências:** `UsuarioRepository`, `PasswordEncoder`
-
-| Método | Descrição |
-|--------|-----------|
-| `cadastrarUsuario(DadosCadastroUsuario)` | Valida unicidade de email, codifica senha (BCrypt), define Role=ALUNO, retorna DTO de detalhe |
-| `listar(Pageable)` | Retorna usuários ativos paginados |
-| `buscarPorId(Long)` | Lança `RecursoNaoEncontradoException` se não encontrado |
-| `atualizarUsuario(Long, DadosAtualizacaoUsuario)` | Atualiza nome/email (valida unicidade); **ignora campo senha** |
-| `desativar(Long)` | Define `ativo=false` (soft delete) |
-
----
-
-### `MateriaService`
-**Dependências:** `MateriaRepository`
-
-| Método | Descrição |
-|--------|-----------|
-| `cadastrarMateria(DadosCadastroMateria)` | Cria matéria |
-| `listarMateria()` | Retorna todas as matérias |
-| `buscarPorID(Long)` | Lança exceção se não encontrado |
-| `atualizarMateria(Long, DadosAtualizacaoMateria)` | Atualiza campos fornecidos |
-| `desativarMateria(Long)` | Define `ativa=false` |
-
----
-
-### `TopicoService`
-**Dependências:** `TopicoRepository`, `MateriaRepository`
-
-| Método | Descrição |
-|--------|-----------|
-| `cadastrarTopico(DadosCadastroTopico)` | Valida existência da matéria e unicidade do nome por matéria |
-| `listarTopicos(Long materiaId)` | Filtra por matéria se fornecida, senão retorna todos ativos |
-| `buscarPorId(Long)` | Lança exceção se não encontrado |
-| `atualizar(Long, DadosAtualizacaoTopico)` | Atualiza campos fornecidos |
-| `desativar(Long)` | Define `ativo=false` |
-
----
-
-### `QuestaoService`
-**Dependências:** `QuestaoRepository`, `TopicoRepository`
-
-| Método | Descrição |
-|--------|-----------|
-| `cadastrar(DadosCadastroQuestao)` | Valida existência do tópico |
-| `listar(Pageable)` | Retorna questões ativas paginadas |
-| `atualizar(Long, DadosAtualizacaoQuestao)` | Atualiza campos fornecidos |
-| `inativar(Long)` | Define `ativa=false` |
-
----
-
-### `ResultadoService`
-**Dependências:** `ResultadoRepository`, `QuestaoRepository`, `UsuarioRepository`
-
-| Método | Descrição |
-|--------|-----------|
-| `cadastrar(DadosCadastroResultado)` | Valida existência de usuário e questão antes de salvar |
-| `listarPorUsuario(Long, Pageable)` | `@Transactional(readOnly=true)`, paginado |
-| `detalharResultado(Long)` | `@Transactional(readOnly=true)` |
-
----
-
-### `TarefaService`
-**Dependências:** `TarefaRepository`, `UsuarioRepository`, `TopicoRepository`
-
-| Método | Descrição |
-|--------|-----------|
-| `cadastrar(DadosCadastroTarefa)` | Valida usuário e tópico; impede tarefas PENDENTE duplicadas para (usuario, topico) |
-| `listarPorUsuario(Long, TarefaStatus)` | Filtra por status se fornecido; senão exclui CANCELADA |
-| `atualizarTarefa(Long, DadosAtualizacaoTarefa)` | Impede atualização de tarefas CONCLUIDA ou CANCELADA |
-| `cancelar(Long)` | Define `status=CANCELADA`; impede cancelar CONCLUIDA |
-
----
-
-### `PerformanceAnalyzerService`
-**Dependências:** `ResultadoRepository`, `TopicoRepository`
-
-| Método | Descrição |
-|--------|-----------|
-| `analisarDesempenho(Long usuarioId)` | Busca todos os tópicos ativos, calcula desempenho por tópico (total/acertos/taxa), filtra tópicos sem resposta, identifica 5 mais fracos |
-| `calcularDesempenhoTopico(Long, Topico)` | Método interno; executa contagens individuais por tópico via repository |
-
-> **Atenção:** Problema N+1 — para cada tópico ativo, executa 2 queries (`countByUsuarioIdAndQuestaoTopicoId` e `countByUsuarioIdAndQuestaoTopicoIdAndStatus`). Com muitos tópicos, pode degradar o desempenho.
-
----
-
-### `OnboardingService`
-**Dependências:** `ChatMensagemRepository`, `PlanoEstudoRepository`, `UsuarioRepository`, `AIClient`, `ObjectMapper`
-
-| Método | Descrição |
-|--------|-----------|
-| `getStatus(Long)` | Retorna flag `onboardingConcluido` do usuário |
-| `enviarMensagem(Long, String)` | Salva mensagem do usuário, busca histórico, chama IA, detecta marcador "ONBOARDING_COMPLETO", salva plano e finaliza onboarding se necessário |
-| `montarPromptComHistorico(List<ChatMensagem>)` | Interno; constrói system prompt + histórico da conversa |
-| `salvarPlanoEFinalizar(Usuario, String)` | Interno; extrai JSON da resposta, valida estrutura, salva `PlanoEstudo`, atualiza `onboardingConcluido=true` |
-
-**System Prompt pergunta sobre:** vestibular desejado, data prevista, matérias, nível atual, horas/dia disponíveis, pontos fortes e fracos.
-
----
-
-### `PlanoEstudoService`
-**Dependências:** `PlanoEstudoRepository`
-
-| Método | Descrição |
-|--------|-----------|
-| `buscarPorUsuario(Long)` | Busca plano de estudos; lança `RecursoNaoEncontradoException` se não existir |
-
----
-
-### `RecommendationService`
-**Dependências:** `PerformanceAnalyzerService`, `AIClient`, `ObjectMapper`
-
-| Método | Descrição |
-|--------|-----------|
-| `gerarRecomendacao(Long)` | Obtém desempenho via `PerformanceAnalyzerService`, monta prompt com dados, chama IA, parseia JSON (trata blocos markdown), retorna `DadosRecomendacao` |
-
----
-
-## 6. Controllers
-
-### `AuthController` — `/auth`
-| Método | Endpoint | Body | Resposta | Segurança |
-|--------|----------|------|----------|-----------|
-| POST | `/login` | `DadosLogin` | `DadosTokenJwt` (200) | Pública |
-| POST | `/registro` | `DadosCadastroUsuario` | `DadosDetalhamentoUsuario` (201) | Pública |
-
----
-
-### `UsuarioController` — `/usuarios`
-| Método | Endpoint | Body/Params | Resposta | Segurança |
-|--------|----------|-------------|----------|-----------|
-| POST | `/` | `DadosCadastroUsuario` | `DadosDetalhamentoUsuario` (201) | Pública* |
-| GET | `/` | Pageable (default size=10) | `Page<DadosListagemUsuario>` (200) | JWT |
-| GET | `/{id}` | — | `DadosDetalhamentoUsuario` (200) | JWT |
-| PUT | `/{id}` | `DadosAtualizacaoUsuario` | `DadosDetalhamentoUsuario` (200) | JWT |
-| DELETE | `/{id}` | — | 204 No Content | JWT |
-
-*Duplica funcionalidade de `/auth/registro`
-
----
-
-### `MateriaController` — `/materias`
-| Método | Endpoint | Body | Resposta | Segurança |
-|--------|----------|------|----------|-----------|
-| POST | `/` | `DadosCadastroMateria` | `DadosDetalhamentoMateria` (201) | JWT |
-| GET | `/` | — | `List<DadosListagemMateria>` (200) | JWT |
-| GET | `/{id}` | — | `DadosDetalhamentoMateria` (200) | JWT |
-| PUT | `/{id}` | `DadosAtualizacaoMateria` | `DadosDetalhamentoMateria` (200) | JWT |
-| DELETE | `/{id}` | — | 204 No Content | JWT |
-
----
-
-### `TopicoController` — `/topicos`
-| Método | Endpoint | Body/Params | Resposta | Segurança |
-|--------|----------|-------------|----------|-----------|
-| POST | `/` | `DadosCadastroTopico` | `DadosDetalhamentoTopico` (201) | JWT |
-| GET | `/` | QueryParam `materiaID` (opcional) | `List<DadosListagemTopico>` (200) | JWT |
-| GET | `/{id}` | — | `DadosDetalhamentoTopico` (200) | JWT |
-| PUT | `/{id}` | `DadosAtualizacaoTopico` | `DadosDetalhamentoTopico` (200) | JWT |
-| DELETE | `/{id}` | — | 204 No Content | JWT |
-
----
-
-### `QuestaoController` — `/questoes`
-| Método | Endpoint | Body/Params | Resposta | Segurança |
-|--------|----------|-------------|----------|-----------|
-| POST | `/` | `DadosCadastroQuestao` | `DadosDetalhamentoQuestao` (201) | JWT |
-| GET | `/` | Pageable (default size=10) | `Page<DadosListagemQuestao>` (200) | JWT |
-| PUT | `/{id}` | `DadosAtualizacaoQuestao` | `DadosDetalhamentoQuestao` (200) | JWT |
-| DELETE | `/{id}` | — | 204 No Content | JWT |
-
----
-
-### `ResultadoController` — `/resultados`
-| Método | Endpoint | Body/Params | Resposta | Segurança |
-|--------|----------|-------------|----------|-----------|
-| POST | `/` | `DadosCadastroResultado` | `DadosDetalhamentoResultado` (201) | JWT |
-| GET | `/usuario/{usuarioId}` | Pageable | `Page<DadosListagemResultados>` (200) | JWT + Ownership |
-| GET | `/{id}` | — | `DadosDetalhamentoResultado` (200) | JWT + Ownership |
-
----
-
-### `TarefaController` — `/tarefas`
-| Método | Endpoint | Body/Params | Resposta | Segurança |
-|--------|----------|-------------|----------|-----------|
-| POST | `/` | `DadosCadastroTarefa` | `DadosDetalhamentoTarefa` (201) | JWT |
-| GET | `/usuario/{usuarioId}` | QueryParam `status` (opcional) | `List<DadosListagemTarefa>` (200) | JWT + Ownership |
-| PUT | `/{id}` | `DadosAtualizacaoTarefa` | `DadosDetalhamentoTarefa` (200) | JWT |
-| DELETE | `/{id}` | — | 204 No Content | JWT |
-
----
-
-### `DashboardController` — `/dashboard`
-| Método | Endpoint | Resposta | Segurança |
-|--------|----------|----------|-----------|
-| GET | `/usuario/{usuarioId}` | `DadosDesempenhoUsuario` (200) | JWT + Ownership |
-
----
-
-### `DiagnosticoController` — `/diagnostico`
-| Método | Endpoint | Resposta | Segurança |
-|--------|----------|----------|-----------|
-| GET | `/usuario/{usuarioId}` | `List<DadosDesempenhoTopico>` (200) | JWT + Ownership |
-
----
-
-### `RecomendacaoController` — `/recomendacao`
-| Método | Endpoint | Resposta | Segurança |
-|--------|----------|----------|-----------|
-| GET | `/usuario/{usuarioId}` | `DadosRecomendacao` (200) | JWT + Ownership |
-
----
-
-### `OnboardingController` — `/onboarding`
-| Método | Endpoint | Body | Resposta | Segurança |
-|--------|----------|------|----------|-----------|
-| GET | `/status/{usuarioId}` | — | `DadosStatusOnboarding` (200) | JWT + Ownership |
-| POST | `/mensagem/{usuarioId}` | `DadosMensagemChat` | `DadosRespostaChat` (200) | JWT + Ownership |
-
----
-
-### `PlanoEstudoController` — `/plano-estudo/usuario/{usuarioId}`
-| Método | Endpoint | Resposta | Segurança |
-|--------|----------|----------|-----------|
-| GET | `/` | `DadosPlanoEstudo` (200) | JWT + Ownership |
-
----
-
-## 7. Segurança
-
-### JWT — `JwtService`
-- **Biblioteca:** `com.auth0:java-jwt:4.4.0`
-- **Algoritmo:** HMAC256
-- **Segredo:** `${api.security.token.secret}` (variável de ambiente)
-- **Emissor (issuer):** `studymind-api`
-- **Expiração:** 2 horas a partir da emissão
-- **Claims do token:**
-  - `sub` (subject): `usuario.email`
-  - `role`: `usuario.role.name()`
-  - `id`: `usuario.id`
-  - `exp`: `Instant.now().plus(2, HOURS)`
-
-### `AuthFilter` — Fluxo de Autenticação
-1. Extrai header `Authorization: Bearer <token>`
-2. Valida token via `JwtService.validarToken()` → retorna o email
-3. Se válido: carrega `UserDetails` via `UserDetailsServiceImpl`
-4. Cria `UsernamePasswordAuthenticationToken` com authorities
-5. Injeta no `SecurityContextHolder`
-
-### `SecurityConfig` — Rotas
-| Tipo | Rotas |
-|------|-------|
-| **Públicas** | POST `/auth/login`, POST `/auth/registro`, `/v3/api-docs/**`, `/swagger-ui/**` |
-| **Protegidas** | Todas as demais (requerem JWT válido) |
-
-> **Nota:** A seção `.requestMatchers("/admin/**").hasRole("ADMIN")` está comentada no código — controle de acesso por role não está efetivo no roteamento.
-
-### `SecurityUtils` — Verificação de Ownership
-- Admins (`Role.ADMIN`) podem acessar dados de qualquer usuário
-- Alunos (`Role.ALUNO`) só podem acessar seus próprios dados
-- Lança `403 Forbidden` se `usuarioId` não corresponde ao autenticado
-
-### CORS
-```
-Origens permitidas: http://127.0.0.1:5500, http://localhost:5500, http://localhost:3000
-Métodos: GET, POST, PUT, DELETE, OPTIONS
-Headers: * (todos)
-Credentials: true
-```
-
----
-
-## 8. Integração Anthropic
-
-### `AIClient` (interface)
-```java
-String gerarResposta(String prompt);
-```
-
-### `AnthropicClient` (implementação)
-| Configuração | Valor |
-|-------------|-------|
-| Endpoint | `https://api.anthropic.com/v1/messages` |
-| Modelo | `claude-haiku-4-5-20251001` |
-| Max Tokens | `4096` |
-| API Key | `${anthropic.api.key}` |
-| anthropic-version | `2023-06-01` |
-
-**Formato de request:**
-```json
+
+  ---
+Relatório de Análise — StudyMind (Spring Boot)
+
+  ---
+1. Mapa de Pacotes e Classes
+
+com.eduardo.studymind (raiz)
+
+┌──────────────────────┬──────────────────────────────────────────────┐
+│        Classe        │               Responsabilidade               │
+├──────────────────────┼──────────────────────────────────────────────┤
+│ StudymindApplication │ Entry point, anotação @SpringBootApplication │
+└──────────────────────┴──────────────────────────────────────────────┘
+
+domain.usuario
+
+┌───────────────────┬───────────────────────────────────────────────────────────────────────────┐
+│      Classe       │                             Responsabilidade                              │
+├───────────────────┼───────────────────────────────────────────────────────────────────────────┤
+│ Usuario           │ Entidade JPA da tabela usuarios, implementa UserDetails (Spring Security) │
+├───────────────────┼───────────────────────────────────────────────────────────────────────────┤
+│ Role              │ Enum: ADMIN, ALUNO                                                        │
+├───────────────────┼───────────────────────────────────────────────────────────────────────────┤
+│ UsuarioRepository │ Repositório JPA: findByEmail, existsByEmail, findAllByAtivoTrue           │
+└───────────────────┴───────────────────────────────────────────────────────────────────────────┘
+
+domain.materia
+
+┌───────────────────┬────────────────────────────────────────────────────────────────────────┐
+│      Classe       │                            Responsabilidade                            │
+├───────────────────┼────────────────────────────────────────────────────────────────────────┤
+│ Materia           │ Entidade JPA da tabela materias, com FK para Usuario                   │
+├───────────────────┼────────────────────────────────────────────────────────────────────────┤
+│ MateriaRepository │ Repositório: busca por usuário, por nome+usuário, verifica duplicidade │
+└───────────────────┴────────────────────────────────────────────────────────────────────────┘
+
+domain.topico
+
+┌──────────────────┬─────────────────────────────────────────────────────────────────────┐
+│      Classe      │                          Responsabilidade                           │
+├──────────────────┼─────────────────────────────────────────────────────────────────────┤
+│ Topico           │ Entidade JPA da tabela topicos, com FK para Materia e Usuario       │
+├──────────────────┼─────────────────────────────────────────────────────────────────────┤
+│ NivelDificuldade │ Enum: FACIL, MEDIO, DIFICIL                                         │
+├──────────────────┼─────────────────────────────────────────────────────────────────────┤
+│ TopicoRepository │ Repositório: busca por usuário, por matéria, JOIN FETCH com matéria │
+└──────────────────┴─────────────────────────────────────────────────────────────────────┘
+
+domain.questao
+
+┌───────────────────┬────────────────────────────────────────────────────────┐
+│      Classe       │                    Responsabilidade                    │
+├───────────────────┼────────────────────────────────────────────────────────┤
+│ Questao           │ Entidade JPA da tabela questoes, com FK para Topico    │
+├───────────────────┼────────────────────────────────────────────────────────┤
+│ TipoQuestao       │ Enum: MULTIPLA_ESCOLHA, VERDADEIRO_FALSO, DISSERTATIVA │
+├───────────────────┼────────────────────────────────────────────────────────┤
+│ QuestaoRepository │ Repositório: busca por tópico, paginação               │
+└───────────────────┴────────────────────────────────────────────────────────┘
+
+domain.resultado
+
+┌───────────────────────────┬─────────────────────────────────────────────────────────────────────────┐
+│          Classe           │                            Responsabilidade                             │
+├───────────────────────────┼─────────────────────────────────────────────────────────────────────────┤
+│ Resultado                 │ Entidade JPA da tabela resultados: resposta individual a uma questão    │
+├───────────────────────────┼─────────────────────────────────────────────────────────────────────────┤
+│ RespostaStatus            │ Enum: CORRETO, INCORRETO, PULADO                                        │
+├───────────────────────────┼─────────────────────────────────────────────────────────────────────────┤
+│ ResultadoSessao           │ Entidade JPA da tabela resultado_sessoes: sumariza uma sessão de estudo │
+├───────────────────────────┼─────────────────────────────────────────────────────────────────────────┤
+│ ResultadoRepository       │ Repositório: busca por usuário+tópico, contagem por status              │
+├───────────────────────────┼─────────────────────────────────────────────────────────────────────────┤
+│ ResultadoSessaoRepository │ Repositório: busca por usuário ordenado por data DESC                   │
+└───────────────────────────┴─────────────────────────────────────────────────────────────────────────┘
+
+domain.tarefa
+
+┌──────────────────┬─────────────────────────────────────────────────────────────────────────┐
+│      Classe      │                            Responsabilidade                             │
+├──────────────────┼─────────────────────────────────────────────────────────────────────────┤
+│ Tarefa           │ Entidade JPA da tabela tarefas, com FK para Usuario e Topico (nullable) │
+├──────────────────┼─────────────────────────────────────────────────────────────────────────┤
+│ TipoTarefa       │ Enum: QUESTOES, REVISAO, META_ACERTO                                    │
+├──────────────────┼─────────────────────────────────────────────────────────────────────────┤
+│ TarefaStatus     │ Enum: PENDENTE, EM_ANDAMENTO, CONCLUIDA, CANCELADA                      │
+├──────────────────┼─────────────────────────────────────────────────────────────────────────┤
+│ TarefaRepository │ Repositório: busca com JOIN FETCH, filtros por status                   │
+└──────────────────┴─────────────────────────────────────────────────────────────────────────┘
+
+domain.plano
+
+┌───────────────────────┬────────────────────────────────────────────────────────────────────────────┐
+│        Classe         │                              Responsabilidade                              │
+├───────────────────────┼────────────────────────────────────────────────────────────────────────────┤
+│ PlanoEstudo           │ Entidade JPA da tabela plano_estudo: armazena JSON do plano gerado pela IA │
+├───────────────────────┼────────────────────────────────────────────────────────────────────────────┤
+│ PlanoEstudoRepository │ Repositório: busca plano ativo, histórico por versão                       │
+└───────────────────────┴────────────────────────────────────────────────────────────────────────────┘
+
+domain.chat
+
+┌────────────────────────┬─────────────────────────────────────────────────────────────────────────────┐
+│         Classe         │                              Responsabilidade                               │
+├────────────────────────┼─────────────────────────────────────────────────────────────────────────────┤
+│ ChatMensagem           │ Entidade JPA da tabela chat_mensagens: histórico de mensagens com a IA      │
+├────────────────────────┼─────────────────────────────────────────────────────────────────────────────┤
+│ RoleChat               │ Enum: USER, ASSISTANT                                                       │
+├────────────────────────┼─────────────────────────────────────────────────────────────────────────────┤
+│ ChatMensagemRepository │ Repositório: busca por usuário ordenado por data ASC, deleteAll por usuário │
+└────────────────────────┴─────────────────────────────────────────────────────────────────────────────┘
+
+service
+
+┌────────────────────────────┬─────────────────────────────────────────────────────────────────────┐
+│           Classe           │                          Responsabilidade                           │
+├────────────────────────────┼─────────────────────────────────────────────────────────────────────┤
+│ UsuarioService             │ CRUD de usuários com validações de negócio                          │
+├────────────────────────────┼─────────────────────────────────────────────────────────────────────┤
+│ MateriaService             │ CRUD de matérias por usuário                                        │
+├────────────────────────────┼─────────────────────────────────────────────────────────────────────┤
+│ TopicoService              │ CRUD de tópicos por usuário/matéria                                 │
+├────────────────────────────┼─────────────────────────────────────────────────────────────────────┤
+│ QuestaoService             │ CRUD de questões                                                    │
+├────────────────────────────┼─────────────────────────────────────────────────────────────────────┤
+│ ResultadoService           │ Registro e consulta de respostas individuais                        │
+├────────────────────────────┼─────────────────────────────────────────────────────────────────────┤
+│ ResultadoSessaoService     │ Registro de sessões de estudo com cálculo de taxa de acerto         │
+├────────────────────────────┼─────────────────────────────────────────────────────────────────────┤
+│ TarefaService              │ CRUD de tarefas com validações de status                            │
+├────────────────────────────┼─────────────────────────────────────────────────────────────────────┤
+│ PlanoEstudoService         │ Consulta e desativação de planos de estudo                          │
+├────────────────────────────┼─────────────────────────────────────────────────────────────────────┤
+│ OnboardingService          │ Orquestra o chat com a IA para gerar o plano inicial e revisões     │
+├────────────────────────────┼─────────────────────────────────────────────────────────────────────┤
+│ AulaService                │ Gera conteúdo de aula e questões via IA (por ID ou por nome)        │
+├────────────────────────────┼─────────────────────────────────────────────────────────────────────┤
+│ TarefaDescricaoService     │ Gera descrição detalhada de tarefa via IA                           │
+├────────────────────────────┼─────────────────────────────────────────────────────────────────────┤
+│ PerformanceAnalyzerService │ Agrega dados de ResultadoSessao para calcular desempenho por tópico │
+├────────────────────────────┼─────────────────────────────────────────────────────────────────────┤
+│ RecommendationService      │ Gera recomendações de estudo via IA com base no desempenho          │
+└────────────────────────────┴─────────────────────────────────────────────────────────────────────┘
+
+service.parser
+
+┌───────────────────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+│      Classe       │                                    Responsabilidade                                     │
+├───────────────────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+│ PlanoEstudoParser │ Faz parse do JSON do plano e cria/reutiliza entidades Materia, Topico e Tarefa no banco │
+└───────────────────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+
+controller
+
+┌───────────────────────────┬──────────────────────────────────────────────┐
+│          Classe           │               Responsabilidade               │
+├───────────────────────────┼──────────────────────────────────────────────┤
+│ AuthController            │ Login e registro de usuário (rotas públicas) │
+├───────────────────────────┼──────────────────────────────────────────────┤
+│ UsuarioController         │ CRUD de usuários                             │
+├───────────────────────────┼──────────────────────────────────────────────┤
+│ MateriaController         │ CRUD de matérias do usuário autenticado      │
+├───────────────────────────┼──────────────────────────────────────────────┤
+│ TopicoController          │ CRUD de tópicos do usuário autenticado       │
+├───────────────────────────┼──────────────────────────────────────────────┤
+│ QuestaoController         │ CRUD de questões                             │
+├───────────────────────────┼──────────────────────────────────────────────┤
+│ ResultadoController       │ Registro e consulta de respostas individuais │
+├───────────────────────────┼──────────────────────────────────────────────┤
+│ ResultadoSessaoController │ Registro e listagem de sessões de estudo     │
+├───────────────────────────┼──────────────────────────────────────────────┤
+│ TarefaController          │ CRUD de tarefas                              │
+├───────────────────────────┼──────────────────────────────────────────────┤
+│ AulaController            │ Geração de conteúdo e questões via IA        │
+├───────────────────────────┼──────────────────────────────────────────────┤
+│ PlanoEstudoController     │ Consulta de plano de estudo ativo            │
+├───────────────────────────┼──────────────────────────────────────────────┤
+│ OnboardingController      │ Chat de onboarding e review do plano         │
+├───────────────────────────┼──────────────────────────────────────────────┤
+│ DashboardController       │ Retorna dados agregados de desempenho        │
+├───────────────────────────┼──────────────────────────────────────────────┤
+│ DiagnosticoController     │ Retorna breakdown por tópico                 │
+├───────────────────────────┼──────────────────────────────────────────────┤
+│ RecomendacaoController    │ Retorna recomendação gerada pela IA          │
+└───────────────────────────┴──────────────────────────────────────────────┘
+
+infra.security
+
+┌────────────────────────┬────────────────────────────────────────────────────────────────────┐
+│         Classe         │                          Responsabilidade                          │
+├────────────────────────┼────────────────────────────────────────────────────────────────────┤
+│ SecurityConfig         │ Configura filtros, CORS, JWT, regras de acesso por rota            │
+├────────────────────────┼────────────────────────────────────────────────────────────────────┤
+│ JwtService             │ Gera e valida tokens JWT com HMAC256                               │
+├────────────────────────┼────────────────────────────────────────────────────────────────────┤
+│ AuthFilter             │ Intercepta requests e injeta autenticação no SecurityContextHolder │
+├────────────────────────┼────────────────────────────────────────────────────────────────────┤
+│ UserDetailsServiceImpl │ Carrega Usuario por email para o Spring Security                   │
+├────────────────────────┼────────────────────────────────────────────────────────────────────┤
+│ SecurityUtils          │ Helpers estáticos: extrai usuário autenticado, verifica ownership  │
+└────────────────────────┴────────────────────────────────────────────────────────────────────┘
+
+infra.ia
+
+┌─────────────────┬───────────────────────────────────────────────────────────┐
+│     Classe      │                     Responsabilidade                      │
+├─────────────────┼───────────────────────────────────────────────────────────┤
+│ AIClient        │ Interface com método gerarResposta(String prompt): String │
+├─────────────────┼───────────────────────────────────────────────────────────┤
+│ AnthropicClient │ Implementação via HTTP para a API da Anthropic            │
+└─────────────────┴───────────────────────────────────────────────────────────┘
+
+exception
+
+┌───────────────────────────────┬────────────────────────────────────────────────────────────────────┐
+│            Classe             │                          Responsabilidade                          │
+├───────────────────────────────┼────────────────────────────────────────────────────────────────────┤
+│ RecursoNaoEncontradoException │ Lançada quando entidade não existe → HTTP 404                      │
+├───────────────────────────────┼────────────────────────────────────────────────────────────────────┤
+│ RegrasDeNegocioException      │ Violação de regra de negócio → HTTP 422                            │
+├───────────────────────────────┼────────────────────────────────────────────────────────────────────┤
+│ ErroIntegracaoIAException     │ Falha ao chamar ou parsear resposta da IA → HTTP 502               │
+├───────────────────────────────┼────────────────────────────────────────────────────────────────────┤
+│ GlobalExceptionHandler        │ @RestControllerAdvice: mapeia exceções para respostas padronizadas │
+└───────────────────────────────┴────────────────────────────────────────────────────────────────────┘
+
+dto/input e dto/output
+
+Aproximadamente 30 records Java distribuídos em subpacotes por domínio (usuario, materia, topico, questao, resultado, tarefa, plano, onboarding, performace [sic], recomendacao, aulaoutput, questaogerada, questoesoutput,
+tarefadescricaooutput).
+
+  ---
+2. Banco de Dados
+
+Migrations Flyway (V1–V14)
+
+┌───────────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Migration │                                                                       O que faz                                                                       │
+├───────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ V1        │ Cria tabela usuarios (id, nome, email UNIQUE, senha, role, ativo, criado_em)                                                                          │
+├───────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ V2        │ Cria tabela materias (id, nome, descricao, ativa)                                                                                                     │
+├───────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ V3        │ Cria tabela topicos (id, nome, descricao, materia_id FK, nivel, ativo)                                                                                │
+├───────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ V4        │ Cria tabela questoes (id, enunciado, tipo, topico_id FK, ativa)                                                                                       │
+├───────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ V5        │ Cria tabela resultados (id, usuario_id FK, questao_id FK, status, resposta_usuario, respondido_em)                                                    │
+├───────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ V6        │ Cria tabela tarefas (id, usuario_id FK, topico_id FK nullable, tipo, descricao, meta, prazo, status DEFAULT 'PENDENTE', criada_em)                    │
+├───────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ V7        │ Cria índices em usuarios(email), topicos(materia_id), questoes(topico_id), resultados(usuario_id, questao_id), tarefas(usuario_id, topico_id, status) │
+├───────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ V8        │ Adiciona coluna onboarding_concluido BOOLEAN DEFAULT FALSE em usuarios                                                                                │
+├───────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ V9        │ Cria tabela chat_mensagens (id, usuario_id FK, role, conteudo TEXT, criado_em) + índice                                                               │
+├───────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ V10       │ Cria tabela plano_estudo (id, usuario_id UNIQUE, conteudo_json TEXT, criado_em)                                                                       │
+├───────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ V11       │ Remove constraint UNIQUE de plano_estudo.usuario_id; adiciona versao INT e ativo BOOLEAN; cria índice em (usuario_id, ativo)                          │
+├───────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ V12       │ Adiciona usuario_id BIGINT NOT NULL DEFAULT 1 em materias e topicos com FK para usuarios; cria índices                                                │
+├───────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ V13       │ Cria tabela resultado_sessoes (id, usuario_id FK, topico_nome, materia_nome, total_questoes, acertos, taxa_acerto DECIMAL(5,2), respondido_em)        │
+├───────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ V14       │ Altera tipo de resultado_sessoes.taxa_acerto de DECIMAL(5,2) para FLOAT8                                                                              │
+└───────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+Alinhamento Entidades × Migrations
+
+┌─────────────────┬────────────────────────────────────────────────────────┬─────────────┐
+│    Entidade     │                         Campo                          │   Status    │
+├─────────────────┼────────────────────────────────────────────────────────┼─────────────┤
+│ Usuario         │ onboardingConcluido → coluna onboarding_concluido (V8) │ ✅  Alinhado │
+├─────────────────┼────────────────────────────────────────────────────────┼─────────────┤
+│ Materia         │ usuario (FK) → coluna usuario_id (V12)                 │ ✅  Alinhado │
+├─────────────────┼────────────────────────────────────────────────────────┼─────────────┤
+│ Topico          │ usuario (FK) → coluna usuario_id (V12)                 │ ✅  Alinhado │
+├─────────────────┼────────────────────────────────────────────────────────┼─────────────┤
+│ PlanoEstudo     │ versao, ativo → adicionados em V11                     │ ✅  Alinhado │
+├─────────────────┼────────────────────────────────────────────────────────┼─────────────┤
+│ ResultadoSessao │ taxaAcerto Double → FLOAT8 (V14)                       │ ✅  Alinhado │
+└─────────────────┴────────────────────────────────────────────────────────┴─────────────┘
+
+Divergência identificada: A migration V10 cria plano_estudo.usuario_id como UNIQUE. A V11 remove essa constraint, o que indica que houve uma mudança de requisito (de um plano por usuário para múltiplas versões). A entidade
+atual não tem anotação @Column(unique=true) para usuario_id, compatível com V11. Sem divergências críticas entre entidade e schema atual.
+
+  ---
+3. Camada de Serviço
+
+UsuarioService
+
+┌─────────────────────────────────────────────────┬────────────────────────────────────────────────────────────────────────────┐
+│                     Método                      │                                 O que faz                                  │
+├─────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────┤
+│ cadastrarUsuario(DadosCadastroUsuario)          │ Valida unicidade de email, encripta senha com BCrypt, salva com role=ALUNO │
+├─────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────┤
+│ listar(Pageable)                                │ Retorna usuários ativos paginados                                          │
+├─────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────┤
+│ buscarPorId(Long)                               │ Retorna detalhamento ou lança 404                                          │
+├─────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────┤
+│ atualizarUsuario(Long, DadosAtualizacaoUsuario) │ Atualiza nome/email/senha parcialmente; valida duplicidade de email        │
+├─────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────┤
+│ desativar(Long)                                 │ Soft delete: seta ativo=false                                              │
+└─────────────────────────────────────────────────┴────────────────────────────────────────────────────────────────────────────┘
+
+MateriaService
+
+┌─────────────────────────────────────────────────┬──────────────────────────────────────────────────────────────────────────┐
+│                     Método                      │                                O que faz                                 │
+├─────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│ cadastrarMateria(DadosCadastroMateria, Long)    │ Valida usuário existe, verifica nome duplicado por usuário, cria matéria │
+├─────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│ listarMateria(Long)                             │ Lista matérias ativas do usuário                                         │
+├─────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│ buscarPorID(Long)                               │ Retorna detalhamento ou lança 404                                        │
+├─────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│ atualizarMateria(Long, DadosAtualizacaoMateria) │ Atualiza nome/descricao/ativa parcialmente                               │
+├─────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│ desativarMateria(Long)                          │ Soft delete: seta ativa=false                                            │
+└─────────────────────────────────────────────────┴──────────────────────────────────────────────────────────────────────────┘
+
+TopicoService
+
+┌────────────────────────────────────────────┬────────────────────────────────────────────────────────────────────────────┐
+│                   Método                   │                                 O que faz                                  │
+├────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────┤
+│ cadastrarTopico(DadosCadastroTopico, Long) │ Valida usuário e matéria, verifica nome duplicado por matéria, cria tópico │
+├────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────┤
+│ listarTopicos(Long, Long)                  │ Por materiaId ou por usuárioId, filtrando ativos                           │
+├────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────┤
+│ buscarPorId(Long)                          │ Retorna detalhamento ou lança 404                                          │
+├────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────┤
+│ atualizar(Long, DadosAtualizacaoTopico)    │ Atualiza campos parcialmente                                               │
+├────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────┤
+│ desativar(Long)                            │ Soft delete                                                                │
+└────────────────────────────────────────────┴────────────────────────────────────────────────────────────────────────────┘
+
+QuestaoService
+
+┌──────────────────────────────────────────┬────────────────────────────────────┐
+│                  Método                  │             O que faz              │
+├──────────────────────────────────────────┼────────────────────────────────────┤
+│ cadastrar(DadosCadastroQuestao)          │ Valida tópico existe, cria questão │
+├──────────────────────────────────────────┼────────────────────────────────────┤
+│ listar(Pageable)                         │ Lista questões ativas paginado     │
+├──────────────────────────────────────────┼────────────────────────────────────┤
+│ atualizar(Long, DadosAtualizacaoQuestao) │ Atualização parcial                │
+├──────────────────────────────────────────┼────────────────────────────────────┤
+│ inativar(Long)                           │ Soft delete                        │
+└──────────────────────────────────────────┴────────────────────────────────────┘
+
+ResultadoService
+
+┌───────────────────────────────────┬─────────────────────────────────────────────────────┐
+│              Método               │                      O que faz                      │
+├───────────────────────────────────┼─────────────────────────────────────────────────────┤
+│ cadastrar(DadosCadastroResultado) │ Valida usuário e questão, salva resposta individual │
+├───────────────────────────────────┼─────────────────────────────────────────────────────┤
+│ listarPorUsuario(Long, Pageable)  │ Lista respostas do usuário paginado                 │
+├───────────────────────────────────┼─────────────────────────────────────────────────────┤
+│ detalharResultado(Long)           │ Retorna detalhamento ou lança 404                   │
+└───────────────────────────────────┴─────────────────────────────────────────────────────┘
+
+ResultadoSessaoService
+
+┌──────────────────────────────────────┬───────────────────────────────────────────────────────────────────────────┐
+│                Método                │                                 O que faz                                 │
+├──────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────┤
+│ salvar(DadosCadastroResultadoSessao) │ Calcula taxaAcerto = (acertos/total)*100, arredonda 2 casas, salva sessão │
+├──────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────┤
+│ listarPorUsuario(Long)               │ Lista sessões ordenadas por data DESC                                     │
+└──────────────────────────────────────┴───────────────────────────────────────────────────────────────────────────┘
+
+TarefaService
+
+┌───────────────────────────────────────────────┬────────────────────────────────────────────────────────────────────────┐
+│                    Método                     │                               O que faz                                │
+├───────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+│ cadastrar(DadosCadastroTarefa)                │ Valida usuário/tópico, verifica tarefa PENDENTE duplicada, cria tarefa │
+├───────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+│ listarPorUsuario(Long, TarefaStatus)          │ Filtra por status ou exclui CANCELADAS                                 │
+├───────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+│ atualizarTarefa(Long, DadosAtualizacaoTarefa) │ Bloqueia atualização se CONCLUIDA/CANCELADA, atualiza parcialmente     │
+├───────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+│ cancelar(Long)                                │ Bloqueia se CONCLUIDA, seta CANCELADA                                  │
+└───────────────────────────────────────────────┴────────────────────────────────────────────────────────────────────────┘
+
+PlanoEstudoService
+
+┌─────────────────────────────────┬──────────────────────────────────────────────────────────────┐
+│             Método              │                          O que faz                           │
+├─────────────────────────────────┼──────────────────────────────────────────────────────────────┤
+│ buscarPorUsuario(Long)          │ Retorna plano ativo ou lança 404                             │
+├─────────────────────────────────┼──────────────────────────────────────────────────────────────┤
+│ buscarHistoricoPorUsuario(Long) │ Retorna todos os planos ordenados por versão ASC             │
+├─────────────────────────────────┼──────────────────────────────────────────────────────────────┤
+│ desativarPlanoEstudo(Long)      │ Seta ativo=false no plano ativo (sem exceção se não existir) │
+└─────────────────────────────────┴──────────────────────────────────────────────────────────────┘
+
+OnboardingService
+
+┌──────────────────────────────────────────────────────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                        Método                        │                                                                         O que faz                                                                         │
+├──────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ getStatus(Long)                                      │ Retorna onboardingConcluido do usuário                                                                                                                    │
+├──────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ enviarMensagem(Long, String)                         │ Bloqueia se onboarding já concluído; chama processarMensagem com SYSTEM_PROMPT_ONBOARDING                                                                 │
+├──────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ enviarMensagemReview(Long, String)                   │ Bloqueia se onboarding não concluído; chama processarMensagem com SYSTEM_PROMPT_REVIEW                                                                    │
+├──────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ processarMensagem(Usuario, String, String) (private) │ Salva mensagem do usuário, busca histórico, monta prompt, chama IA, detecta marcador ONBOARDING_COMPLETO, salva plano se completo                         │
+├──────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ montarPromptComHistorico(List, String) (private)     │ Formata system prompt + histórico de mensagens em um único string                                                                                         │
+├──────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ salvarPlanoEFinalizar(Usuario, String) (private)     │ Faz parse do JSON, desativa plano anterior (se review), calcula próxima versão, salva PlanoEstudo, chama PlanoEstudoParser, seta onboardingConcluido=true │
+└──────────────────────────────────────────────────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+AulaService
+
+┌──────────────────────────────────────────────┬────────────────────────────────────────────────────────────────────────┐
+│                    Método                    │                               O que faz                                │
+├──────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+│ gerarConteudoAula(Long)                      │ Valida tópico no banco, monta prompt, chama IA, parseia JSON retornado │
+├──────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+│ gerarQuestoes(Long, int)                     │ Valida tópico, solicita N questões com 5 alternativas cada             │
+├──────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+│ gerarConteudoPorNome(String, String, String) │ Mesma lógica mas sem lookup no banco (recebe nomes diretamente)        │
+├──────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+│ gerarQuestoesPorNome(String, String, int)    │ Mesma lógica para questões por nome                                    │
+├──────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+│ parseAulaJson(String) (private)              │ Limpa markdown, parseia JSON, extrai campos                            │
+├──────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+│ parseQuestoesJson(String) (private)          │ Limpa markdown, parseia array de questões                              │
+└──────────────────────────────────────────────┴────────────────────────────────────────────────────────────────────────┘
+
+TarefaDescricaoService
+
+┌──────────────────────────────────────┬───────────────────────────────────────────────────────────────────────────────┐
+│                Método                │                                   O que faz                                   │
+├──────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────┤
+│ gerarDescricao(Long)                 │ Busca tarefa com LEFT JOIN FETCH topico, monta prompt, chama IA, parseia JSON │
+├──────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────┤
+│ parseDescricaoJson(String) (private) │ Extrai titulo, descricaoDetalhada, passos[] do JSON                           │
+└──────────────────────────────────────┴───────────────────────────────────────────────────────────────────────────────┘
+
+PerformanceAnalyzerService
+
+┌──────────────────────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│          Método          │                                                     O que faz                                                      │
+├──────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ analisarDesempenho(Long) │ Busca todos os ResultadoSessao, agrupa por topicoNome+materiaNome, calcula taxas, identifica 5 tópicos mais fracos │
+└──────────────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+RecommendationService
+
+┌─────────────────────────────────────────────────────────┬────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                         Método                          │                                           O que faz                                            │
+├─────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ gerarRecomendacao(Long)                                 │ Obtém análise de desempenho, monta prompt com dados dos tópicos fracos, chama IA, parseia JSON │
+├─────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ montarPrompt(DadosDesempenhoUsuario) (private)          │ Formata texto com estatísticas para enviar à IA                                                │
+├─────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ parseResposta(String, DadosDesempenhoUsuario) (private) │ Limpa markdown, parseia JSON da IA                                                             │
+└─────────────────────────────────────────────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+PlanoEstudoParser
+
+┌────────────────────────────────────────────────────────┬──────────────────────────────────────────────────────────────────────────┐
+│                         Método                         │                                O que faz                                 │
+├────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│ parsearEPopular(Usuario, String)                       │ Valida campos materias[] e semanas[], chama sub-métodos                  │
+├────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│ processarMaterias(Usuario, JsonNode) (private)         │ Cria ou reutiliza Materia por nome+usuário; retorna Map<String, Materia> │
+├────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│ processarTopicos(Usuario, JsonNode, Materia) (private) │ Cria ou reutiliza Topico por nome+matéria+usuário                        │
+├────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+│ processarSemanas(Usuario, JsonNode, Map) (private)     │ Sempre cria nova Tarefa para cada entrada nas semanas                    │
+└────────────────────────────────────────────────────────┴──────────────────────────────────────────────────────────────────────────┘
+
+Métodos vazios, incompletos ou com TODO: Nenhum método vazio identificado nos services. Existe um TODO comentado na SecurityConfig sobre controle de acesso por papel (ADMIN), mas não é um método incompleto.
+
+  ---
+4. Controllers e Endpoints
+
+Rotas Públicas (permitAll)
+
+┌────────┬────────────────┬──────────────────────────────────────────────────┬──────────────────────────────┐
+│ Método │      Path      │                     Entrada                      │            Saída             │
+├────────┼────────────────┼──────────────────────────────────────────────────┼──────────────────────────────┤
+│ POST   │ /auth/login    │ DadosLogin (email, senha) @Valid                 │ 200 DadosTokenJwt            │
+├────────┼────────────────┼──────────────────────────────────────────────────┼──────────────────────────────┤
+│ POST   │ /auth/registro │ DadosCadastroUsuario (nome, email, senha) @Valid │ 201 DadosDetalhamentoUsuario │
+└────────┴────────────────┴──────────────────────────────────────────────────┴──────────────────────────────┘
+
+Rotas Autenticadas (JWT obrigatório)
+
+┌────────┬───────────────────────────────────────┬──────────────────────────────────────┬──────────────────────────────────┬──────────────────────────────────────┐
+│ Método │                 Path                  │               Entrada                │              Saída               │              Ownership               │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /usuarios                             │ Pageable                             │ Page<DadosListagemUsuario>       │ Não verificado                       │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /usuarios/{id}                        │ —                                    │ DadosDetalhamentoUsuario         │ Não verificado                       │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ PUT    │ /usuarios/{id}                        │ DadosAtualizacaoUsuario              │ DadosDetalhamentoUsuario         │ Não verificado                       │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ DELETE │ /usuarios/{id}                        │ —                                    │ 204                              │ Não verificado                       │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ POST   │ /materias                             │ DadosCadastroMateria @Valid          │ 201 DadosDetalhamentoMateria     │ Extrai usuário do JWT                │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /materias                             │ —                                    │ List<DadosListagemMateria>       │ Extrai usuário do JWT                │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /materias/{id}                        │ —                                    │ DadosDetalhamentoMateria         │ Não verificado                       │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ PUT    │ /materias/{id}                        │ DadosAtualizacaoMateria              │ DadosDetalhamentoMateria         │ Não verificado                       │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ DELETE │ /materias/{id}                        │ —                                    │ 204                              │ Não verificado                       │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ POST   │ /topicos                              │ DadosCadastroTopico @Valid           │ 201 DadosDetalhamentoTopico      │ Extrai usuário do JWT                │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /topicos                              │ ?materiaID opcional                  │ List<DadosListagemTopico>        │ Extrai usuário do JWT                │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /topicos/{id}                         │ —                                    │ DadosDetalhamentoTopico          │ Não verificado                       │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ PUT    │ /topicos/{id}                         │ DadosAtualizacaoTopico               │ DadosDetalhamentoTopico          │ Não verificado                       │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ DELETE │ /topicos/{id}                         │ —                                    │ 204                              │ Não verificado                       │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ POST   │ /questoes                             │ DadosCadastroQuestao @Valid          │ 201 DadosDetalhamentoQuestao     │ Sem verificação                      │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /questoes                             │ Pageable                             │ Page<DadosListagemQuestao>       │ Sem verificação                      │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ PUT    │ /questoes/{id}                        │ DadosAtualizacaoQuestao              │ DadosDetalhamentoQuestao         │ Sem verificação                      │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ DELETE │ /questoes/{id}                        │ —                                    │ 204                              │ Sem verificação                      │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ POST   │ /resultados                           │ DadosCadastroResultado @Valid        │ 201 DadosDetalhamentoResultado   │ Sem verificação de ownership no POST │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /resultados/usuario/{usuarioId}       │ Pageable                             │ Page<DadosListagemResultados>    │ verificarOwnership ✅                 │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /resultados/{id}                      │ —                                    │ DadosDetalhamentoResultado       │ verificarOwnership no resultado ✅    │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ POST   │ /resultado-sessao                     │ DadosCadastroResultadoSessao @Valid  │ 201 DadosResultadoSessaoOutput   │ Sem verificação                      │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /resultado-sessao/usuario/{usuarioId} │ —                                    │ List<DadosResultadoSessaoOutput> │ Sem verificação                      │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ POST   │ /tarefas                              │ DadosCadastroTarefa @Valid           │ 201 DadosDetalhamentoTarefa      │ Sem verificação no POST              │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /tarefas/usuario/{usuarioId}          │ ?status opcional                     │ List<DadosListagemTarefa>        │ verificarOwnership ✅                 │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ PUT    │ /tarefas/{id}                         │ DadosAtualizacaoTarefa               │ DadosDetalhamentoTarefa          │ Sem verificação                      │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ DELETE │ /tarefas/{id}                         │ —                                    │ 204                              │ Sem verificação                      │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /aula/topico/{topicoId}/conteudo      │ —                                    │ DadosAulaOutput                  │ Sem verificação                      │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /aula/topico/{topicoId}/questoes      │ ?quantidade=5                        │ DadosQuestoesOutput              │ Sem verificação                      │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /aula/tarefa/{tarefaId}/descricao     │ —                                    │ DadosTarefaDescricao             │ Sem verificação                      │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /aula/topico/por-nome/conteudo        │ ?topicoNome&materiaNome&nivel        │ DadosAulaOutput                  │ Sem verificação                      │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /aula/topico/por-nome/questoes        │ ?topicoNome&materiaNome&quantidade=5 │ DadosQuestoesOutput              │ Sem verificação                      │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /plano-estudo/usuario/{usuarioId}     │ —                                    │ DadosPlanoEstudo                 │ verificarOwnership ✅                 │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /onboarding/status/{usuarioId}        │ —                                    │ DadosStatusOnboarding            │ verificarOwnership ✅                 │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ POST   │ /onboarding/mensagem/{usuarioId}      │ DadosMensagemChat @Valid             │ DadosRespostaChat                │ verificarOwnership ✅                 │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ POST   │ /onboarding/review/{usuarioId}        │ DadosMensagemChat @Valid             │ DadosRespostaChat                │ verificarOwnership ✅                 │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /dashboard/usuario/{usuarioId}        │ —                                    │ DadosDesempenhoUsuario           │ verificarOwnership ✅                 │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /diagnostico/usuario/{usuarioId}      │ —                                    │ List<DadosDesempenhoTopico>      │ verificarOwnership ✅                 │
+├────────┼───────────────────────────────────────┼──────────────────────────────────────┼──────────────────────────────────┼──────────────────────────────────────┤
+│ GET    │ /recomendacao/usuario/{usuarioId}     │ —                                    │ DadosRecomendacao                │ verificarOwnership ✅                 │
+└────────┴───────────────────────────────────────┴──────────────────────────────────────┴──────────────────────────────────┴──────────────────────────────────────┘
+
+Endpoints sem validação ou sem tratamento adequado identificados:
+- POST /resultados — recebe usuarioId no body sem verificar se o usuário autenticado é o dono; qualquer usuário autenticado pode registrar respostas em nome de outro.
+- POST /resultado-sessao — mesma questão: usuarioId no body sem ownership check.
+- GET /resultado-sessao/usuario/{usuarioId} — sem verificarOwnership.
+- PUT /tarefas/{id} e DELETE /tarefas/{id} — sem verificar se o usuário autenticado é dono da tarefa.
+- PUT /materias/{id} e DELETE /materias/{id} — sem verificar se é dono da matéria.
+- PUT /topicos/{id} e DELETE /topicos/{id} — sem verificar ownership.
+- Endpoints /aula/** — sem nenhum controle de ownership; qualquer usuário autenticado pode gerar conteúdo por topicoId de outro usuário.
+
+  ---
+5. Integração com IA (Anthropic)
+
+Configuração do AnthropicClient
+
+// AnthropicClient.java
+private static final String API_URL = "https://api.anthropic.com/v1/messages";
+private static final String MODEL   = "claude-haiku-4-5-20251001";
+// max_tokens: 4096
+// anthropic-version: "2023-06-01"
+// API Key via @Value("${anthropic.api.key}")
+Timeout: Não há timeout configurado explicitamente — usa o default do RestClient.create() sem customização. Isso é um risco: se a Anthropic demorar, a requisição fica presa indefinidamente.
+
+Fluxo completo do Onboarding
+
+1. POST /onboarding/mensagem/{usuarioId}
+   └─ OnboardingController.enviarMensagem()
+   └─ SecurityUtils.verificarOwnership()
+   └─ OnboardingService.enviarMensagem(usuarioId, mensagem)
+   └─ Valida: onboardingConcluido == false
+   └─ Carrega Usuario do banco
+   └─ processarMensagem(usuario, mensagem, SYSTEM_PROMPT_ONBOARDING)
+
+2. processarMensagem():
+   a. Salva ChatMensagem{role=USER, conteudo=mensagem}
+   b. Busca todo histórico: findAllByUsuarioIdOrderByCriadoEmAsc(usuarioId)
+   c. montarPromptComHistorico(historico, systemPrompt)
+   → Formato: "[SISTEMA]\n{systemPrompt}\n\n[HISTÓRICO]\nUsuário: ...\nAssistente: ...\nUsuário: {nova}\nAssistente:"
+   d. aiClient.gerarResposta(promptCompleto)
+   → POST https://api.anthropic.com/v1/messages
+   → body: {model, max_tokens:4096, messages:[{role:user, content:prompt}]}
+   → extrai response.content[0].text
+   e. Detecta marcador: respostaIA.contains("ONBOARDING_COMPLETO")
+   → Se NÃO: salva ChatMensagem{role=ASSISTANT}, retorna DadosRespostaChat(resposta, false)
+   → Se SIM: chama salvarPlanoEFinalizar(usuario, respostaIA)
+
+3. salvarPlanoEFinalizar():
+   a. Extrai JSON da resposta (tudo após "ONBOARDING_COMPLETO\n")
+   b. objectMapper.readTree(json) — valida estrutura
+   c. Se plano ativo existe → plano.setAtivo(false)
+   d. Calcula versao = max(versoes existentes) + 1
+   e. Cria PlanoEstudo{conteudoJson, versao, ativo=true}
+   f. planoEstudoRepository.save(plano)
+   g. planoEstudoParser.parsearEPopular(usuario, json) → cria Materia/Topico/Tarefa
+   h. usuario.setOnboardingConcluido(true)
+   i. Salva ChatMensagem{role=ASSISTANT, conteudo=resposta limpa}
+   j. Retorna DadosRespostaChat("Plano de estudos criado com sucesso!", true)
+
+Formato do JSON em conteudoJson
+
+O SYSTEM_PROMPT_ONBOARDING instrui a IA a gerar:
+
 {
-  "model": "claude-haiku-4-5-20251001",
-  "max_tokens": 4096,
-  "messages": [{ "role": "user", "content": "<prompt>" }]
+"vestibular": "ENEM",
+"dataExame": "2025-11-01",
+"horasPorDia": 3,
+"versao": 1,
+"materias": [
+{
+"nome": "Matemática",
+"descricao": "...",
+"topicos": [
+{ "nome": "Funções", "nivel": "MEDIO", "descricao": "..." }
+]
 }
-```
-A resposta é extraída de `response.content[0].text`.
+],
+"semanas": [
+{
+"numero": 1,
+"tarefas": [
+{
+"topicoNome": "Funções",
+"materiaNome": "Matemática",
+"tipo": "REVISAO",
+"descricao": "Revisar funções quadráticas",
+"meta": 10
+}
+]
+}
+]
+}
 
----
+Onde conteudoJson é parseado
 
-### Fluxo do Onboarding (OnboardingService → AIClient)
+Sim, é parseado em dois lugares:
 
-```
-POST /onboarding/mensagem/{usuarioId}
-    │
-    ├─ Salva mensagem do usuário em chat_mensagens (role=USER)
-    ├─ Busca todo o histórico do usuário (findAllByUsuarioIdOrderByCriadoEmAsc)
-    ├─ Monta prompt: SYSTEM_PROMPT + histórico da conversa
-    ├─ Chama AIClient.gerarResposta(prompt)
-    │
-    ├─ [SE resposta contém "ONBOARDING_COMPLETO"]
-    │       ├─ Extrai JSON após o marcador
-    │       ├─ Valida estrutura do JSON via ObjectMapper
-    │       ├─ Salva em plano_estudo (PlanoEstudoRepository.save)
-    │       └─ Atualiza usuario.onboardingConcluido = true
-    │
-    ├─ Salva resposta da IA em chat_mensagens (role=ASSISTANT)
-    └─ Retorna DadosRespostaChat { resposta, onboardingConcluido }
-```
+1. PlanoEstudoParser.parsearEPopular() — chamado por OnboardingService.salvarPlanoEFinalizar() imediatamente após salvar o PlanoEstudo. Usa ObjectMapper.readTree() para criar Materia, Topico e Tarefa no banco.
+2. OnboardingService.salvarPlanoEFinalizar() — faz objectMapper.readTree(json) antes de salvar, apenas para validar que o JSON é válido (não o usa para criar entidades).
 
-**System Prompt coleta:**
-1. Vestibular desejado (FUVEST, ENEM, UNICAMP, etc.)
-2. Data prevista do exame
-3. Matérias para estudar
-4. Nível atual em cada matéria
-5. Horas por dia disponíveis
-6. Pontos fortes e fracos
+O conteudoJson armazenado no banco não é re-parseado ao ser lido via GET /plano-estudo/usuario/{id} — ele é retornado como String bruta dentro de DadosPlanoEstudo.conteudoJson. O frontend é responsável por interpretar esse
+JSON.
 
----
+  ---
+6. Segurança
 
-### Fluxo de Recomendação (RecommendationService → AIClient)
+Rotas protegidas vs públicas
 
-```
-GET /recomendacao/usuario/{usuarioId}
-    │
-    ├─ PerformanceAnalyzerService.analisarDesempenho(usuarioId)
-    │       └─ Calcula desempenho por tópico, identifica 5 mais fracos
-    │
-    ├─ Monta prompt com:
-    │       ├─ Total de respostas e taxa de acerto geral
-    │       └─ Lista dos 5 tópicos mais fracos com detalhes
-    │
-    ├─ Chama AIClient.gerarResposta(prompt)
-    ├─ Parseia JSON (trata blocos markdown ```json ... ```)
-    └─ Retorna DadosRecomendacao { diagnostico, topicosPrioritarios,
-                                    dicasPraticas, mensagemMotivacional,
-                                    taxaAcertoGeral }
-```
+// SecurityConfig.java
+.requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+.requestMatchers(HttpMethod.POST, "/auth/registro").permitAll()
+.requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+.anyRequest().authenticated()
 
----
+Todo o restante exige JWT válido. Não há diferenciação por papel (ROLE_ADMIN vs ROLE_ALUNO) — isso está marcado como TODO no código.
 
-## 9. Testes
+Validação do JWT (JwtService)
 
-### Classes de Teste Existentes
+- Algoritmo: HMAC256 com secret via variável de ambiente ${api.security.token.secret}
+- Expiração: 2 horas
+- validarToken() retorna null em caso de qualquer JWTVerificationException (token expirado, assinatura inválida, etc.)
+- AuthFilter verifica se o token retornado não é null e não está em branco antes de autenticar
 
-| Classe | Tipo | Quantidade de Testes |
-|--------|------|---------------------|
-| `StudymindApplicationTests` | Contexto (smoke test) | 1 |
-| `UsuarioServiceTest` | Unitário (Mockito) | 6 |
-| `MateriaServiceTest` | Unitário (Mockito) | 6 |
-| `TopicoServiceTest` | Unitário (Mockito) | 5 |
-| `QuestaoServiceTest` | Unitário (Mockito) | 5 |
-| `ResultadoServiceTest` | Unitário (Mockito) | 4 |
-| `TarefaServiceTest` | Unitário (Mockito) | 6 |
-| `AuthControllerTest` | Integração (MockMvc) | 4 |
+A validação está correta para o que foi implementado.
 
-**Total:** ~37 testes
+Endpoints que deveriam estar mais protegidos
 
-### Cenários Cobertos (por service)
+- GET /usuarios e GET /usuarios/{id} — qualquer usuário autenticado pode listar/ver todos os outros usuários. Deveria ser restrito a ADMIN.
+- DELETE /usuarios/{id} — qualquer usuário autenticado pode desativar qualquer conta.
+- POST /questoes, PUT /questoes/{id}, DELETE /questoes/{id} — operações de admin acessíveis a qualquer usuário autenticado.
+- POST /resultado-sessao e GET /resultado-sessao/usuario/{id} — sem verificarOwnership, qualquer usuário pode ver sessões de outros.
 
-**UsuarioService:** cadastro com sucesso, email duplicado, busca por id, id não encontrado, atualização com email duplicado, desativação  
-**MateriaService:** cadastro, listagem, busca por id, id não encontrado, desativação com e sem existência  
-**TopicoService:** cadastro com sucesso, nome duplicado por matéria, listagem, id não encontrado, desativação  
-**QuestaoService:** cadastro com sucesso, tópico não encontrado, atualização com id não encontrado, inativação com e sem existência  
-**ResultadoService:** cadastro com sucesso, usuário não encontrado, questão não encontrada, detalhe não encontrado  
-**TarefaService:** cadastro com sucesso, tarefa duplicada, usuário não encontrado, atualização de tarefa concluída, cancelamento com e sem conflito  
-**AuthController:** login com sucesso, login sem email, registro com sucesso, registro com senha fraca
+  ---
+7. Testes
 
-### Cobertura Ausente
+StudymindApplicationTests
 
-- `TopicoService.listarTopicos(materiaId)` — filtro por matéria não testado
-- `TopicoService.atualizar()` — nenhum teste
-- `QuestaoService.listar()` — nenhum teste
-- `TarefaService.listarPorUsuario()` — nenhum teste
-- `TarefaService.atualizarTarefa()` — nenhum teste
-- `PerformanceAnalyzerService` — **zero cobertura**
-- `OnboardingService` — **zero cobertura** (fluxo crítico de IA sem testes)
-- `RecommendationService` — **zero cobertura**
-- `PlanoEstudoService` — **zero cobertura**
-- Controllers (exceto Auth) — **zero cobertura**
-- `JwtService` — nenhum teste unitário
-- `AuthFilter` — nenhum teste
-- `SecurityUtils` — nenhum teste
+- Tipo: Smoke test (@SpringBootTest)
+- Cenário: Verifica se o contexto da aplicação sobe sem erro
+- Status: Deve passar se as variáveis de ambiente estiverem configuradas (usa TestSecurityConfig para desabilitar segurança nos testes)
 
----
+TestSecurityConfig
 
-## 10. Problemas Encontrados
+- Configuração de segurança alternativa para testes: desabilita o AuthFilter e permite todas as requisições
 
-### Críticos
+UsuarioServiceTest (5 testes, Mockito puro)
 
-**[C1] Atualização de senha não funciona**  
-`DadosAtualizacaoUsuario` possui campo `senha`, mas `UsuarioService.atualizarUsuario()` nunca o processa nem o codifica.  
-Usuários não conseguem alterar a senha. A mudança é silenciosamente ignorada.
+┌────────────────────────────────────────────────────────────┬─────────────────┐
+│                          Cenário                           │ Status esperado │
+├────────────────────────────────────────────────────────────┼─────────────────┤
+│ cadastrarUsuario_sucesso                                   │ ✅               │
+├────────────────────────────────────────────────────────────┼─────────────────┤
+│ cadastrarUsuario_emailDuplicado → RegrasDeNegocioException │ ✅               │
+├────────────────────────────────────────────────────────────┼─────────────────┤
+│ buscarPorId_sucesso                                        │ ✅               │
+├────────────────────────────────────────────────────────────┼─────────────────┤
+│ buscarPorId_naoEncontrado → RecursoNaoEncontradoException  │ ✅               │
+├────────────────────────────────────────────────────────────┼─────────────────┤
+│ atualizarUsuario_emailDuplicado → RegrasDeNegocioException │ ✅               │
+├────────────────────────────────────────────────────────────┼─────────────────┤
+│ desativar_sucesso                                          │ ✅               │
+└────────────────────────────────────────────────────────────┴─────────────────┘
 
-**[C2] Inconsistência em `topicoId` de Tarefa**  
-- `DadosCadastroTarefa.topicoId` tem `@NotNull` (obrigatório na criação)
-- Coluna `tarefas.topico_id` é nullable no banco
-- Entidade `Tarefa.topico` permite null (`@JoinColumn` sem `nullable=false`)
-- DTOs de saída já tratam topico nulo
-- Regra de criação é mais restritiva que o esquema — inconsistência de design
+MateriaServiceTest (4 testes)
 
-**[C3] Ausência de Cascade Delete**  
-Nenhuma entidade define política de cascata (`cascade`, `orphanRemoval`).  
-Deletar um `Usuario` deixará registros órfãos em `chat_mensagens`, `resultados`, `tarefas` e `plano_estudo`.
+┌────────────────────────────────────────────────────────────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                            Cenário                             │                                                             Observação                                                             │
+├────────────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ cadastrarMateria_sucesso                                       │ ✅                                                                                                                                  │
+├────────────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ cadastrarMateria_nomeDuplicado → RegrasDeNegocioException      │ ✅                                                                                                                                  │
+├────────────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ listarMateria_sucesso                                          │ ✅                                                                                                                                  │
+├────────────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ buscarPorId_sucesso — ATENÇÃO: nome do teste é enganoso        │ O teste chama desativarMateria(1L), não buscarPorID(). O @DisplayName diz "buscar por ID" mas o comportamento testado é desativar. │
+├────────────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ desativarMateria_naoEncontrado → RecursoNaoEncontradoException │ ✅                                                                                                                                  │
+└────────────────────────────────────────────────────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
-**[C4] Segredo JWT sem valor padrão**  
-`application.properties` referencia `${JWT_SECRET}` sem fallback.  
-A aplicação não inicializa se a variável de ambiente não estiver definida (afeta testes de integração também).
+TopicoServiceTest (5 testes)
 
----
+┌───────────────────────────────┬─────────────────┐
+│            Cenário            │ Status esperado │
+├───────────────────────────────┼─────────────────┤
+│ cadastrarTopico_sucesso       │ ✅               │
+├───────────────────────────────┼─────────────────┤
+│ cadastrarTopico_nomeDuplicado │ ✅               │
+├───────────────────────────────┼─────────────────┤
+│ listarTopicos_sucesso         │ ✅               │
+├───────────────────────────────┼─────────────────┤
+│ buscarPorId_naoEncontrado     │ ✅               │
+├───────────────────────────────┼─────────────────┤
+│ desativar_sucesso             │ ✅               │
+└───────────────────────────────┴─────────────────┘
 
-### Segurança
+questaoServiceTest (4 testes — nome com letra minúscula, violação de convenção)
 
-**[S1] Senha do banco de dados no código-fonte**  
-`application.properties` contém `spring.datasource.password=Vanda1107.` em texto puro.  
-Não deve estar no controle de versão.
+┌────────────────────────────────────────┬─────────────────┐
+│                Cenário                 │ Status esperado │
+├────────────────────────────────────────┼─────────────────┤
+│ cadastrar_sucesso (com ArgumentCaptor) │ ✅               │
+├────────────────────────────────────────┼─────────────────┤
+│ cadastrar_topicoNaoEncontrado          │ ✅               │
+├────────────────────────────────────────┼─────────────────┤
+│ atualizar_naoEncontrado                │ ✅               │
+├────────────────────────────────────────┼─────────────────┤
+│ inativar_sucesso                       │ ✅               │
+├────────────────────────────────────────┼─────────────────┤
+│ inativar_naoEncontrado                 │ ✅               │
+└────────────────────────────────────────┴─────────────────┘
 
-**[S2] CORS hardcoded para desenvolvimento**  
-Origins permitidas (`localhost:5500`, `localhost:3000`) estão fixas no código.  
-Qualquer deploy de produção exige modificação do código ou do `application.properties`.
+ResultadoServiceTest (4 testes)
 
-**[S3] Dados sensíveis não criptografados**  
-`chat_mensagens.conteudo` e `plano_estudo.conteudo_json` guardam informações pessoais do aluno em texto puro.
+┌────────────────────────────────┬─────────────────┐
+│            Cenário             │ Status esperado │
+├────────────────────────────────┼─────────────────┤
+│ cadastrar_sucesso              │ ✅               │
+├────────────────────────────────┼─────────────────┤
+│ cadastrar_usuarioNaoEncontrado │ ✅               │
+├────────────────────────────────┼─────────────────┤
+│ cadastrar_questaoNaoEncontrada │ ✅               │
+├────────────────────────────────┼─────────────────┤
+│ detalhar_naoEncontrado         │ ✅               │
+└────────────────────────────────┴─────────────────┘
 
-**[S4] Endpoint duplicado de criação de usuário**  
-`POST /usuarios` e `POST /auth/registro` fazem a mesma operação.  
-O `POST /usuarios` está efetivamente público (não aparece na whitelist mas não há restrição explícita).
+TarefaServiceTest (6 testes)
 
-**[S5] Controle de acesso por role incompleto**  
-`.requestMatchers("/admin/**").hasRole("ADMIN")` está comentado em `SecurityConfig`.  
-Nenhum endpoint admin foi criado; o enum `ADMIN` existe mas não tem efeito sobre roteamento.
+┌────────────────────────────────┬─────────────────┐
+│            Cenário             │ Status esperado │
+├────────────────────────────────┼─────────────────┤
+│ cadastrar_sucesso              │ ✅               │
+├────────────────────────────────┼─────────────────┤
+│ cadastrar_tarefaDuplicada      │ ✅               │
+├────────────────────────────────┼─────────────────┤
+│ cadastrar_usuarioNaoEncontrado │ ✅               │
+├────────────────────────────────┼─────────────────┤
+│ atualizar_tarefaConcluida      │ ✅               │
+├────────────────────────────────┼─────────────────┤
+│ cancelar_sucesso               │ ✅               │
+├────────────────────────────────┼─────────────────┤
+│ cancelar_tarefaConcluida       │ ✅               │
+└────────────────────────────────┴─────────────────┘
 
----
+PlanoEstudoServiceTest (5 testes)
 
-### Desempenho
+┌───────────────────────────────────────┬─────────────────┐
+│                Cenário                │ Status esperado │
+├───────────────────────────────────────┼─────────────────┤
+│ buscarPorUsuario_retornaPlano         │ ✅               │
+├───────────────────────────────────────┼─────────────────┤
+│ buscarPorUsuario_planoNaoEncontrado   │ ✅               │
+├───────────────────────────────────────┼─────────────────┤
+│ buscarHistorico_retornaLista          │ ✅               │
+├───────────────────────────────────────┼─────────────────┤
+│ buscarHistorico_semPlanos             │ ✅               │
+├───────────────────────────────────────┼─────────────────┤
+│ desativar_planoExistente              │ ✅               │
+├───────────────────────────────────────┼─────────────────┤
+│ desativar_semPlanoAtivo (sem exceção) │ ✅               │
+└───────────────────────────────────────┴─────────────────┘
 
-**[P1] Problema N+1 em `PerformanceAnalyzerService`**  
-Para cada tópico ativo, são disparadas 2 queries de contagem separadas (`countByUsuarioIdAndQuestaoTopicoId` e `countByUsuarioIdAndQuestaoTopicoIdAndStatus`).  
-Com 50 tópicos = 100 queries por requisição ao dashboard.
+PlanoEstudoParserTest (5 testes)
 
-**[P2] Histórico de chat não paginado**  
-`ChatMensagemRepository.findAllByUsuarioIdOrderByCriadoEmAsc()` retorna todas as mensagens do usuário.  
-Usuários com muitas mensagens consumirão memória crescente e enviarão contextos enormes para a IA.
+┌────────────────────────────────────────────┬─────────────────┐
+│                  Cenário                   │ Status esperado │
+├────────────────────────────────────────────┼─────────────────┤
+│ parsear_criaMateriaNova                    │ ✅               │
+├────────────────────────────────────────────┼─────────────────┤
+│ parsear_reutilizaMateriaExistente          │ ✅               │
+├────────────────────────────────────────────┼─────────────────┤
+│ parsear_reutilizaTopicoExistente           │ ✅               │
+├────────────────────────────────────────────┼─────────────────┤
+│ parsear_jsonSemMaterias → RuntimeException │ ✅               │
+├────────────────────────────────────────────┼─────────────────┤
+│ parsear_sempreCriaNovasTarefas             │ ✅               │
+└────────────────────────────────────────────┴─────────────────┘
 
----
+OnboardingServiceTest (6 testes)
 
-### Fragilidade da Integração com IA
+┌─────────────────────────────────────────────┬─────────────────┐
+│                   Cenário                   │ Status esperado │
+├─────────────────────────────────────────────┼─────────────────┤
+│ getStatus_naoConcluido                      │ ✅               │
+├─────────────────────────────────────────────┼─────────────────┤
+│ getStatus_usuarioNaoEncontrado              │ ✅               │
+├─────────────────────────────────────────────┼─────────────────┤
+│ enviarMensagem_respostaSimples              │ ✅               │
+├─────────────────────────────────────────────┼─────────────────┤
+│ enviarMensagem_onboardingJaConcluido        │ ✅               │
+├─────────────────────────────────────────────┼─────────────────┤
+│ enviarMensagem_concluidoComSucesso          │ ✅               │
+├─────────────────────────────────────────────┼─────────────────┤
+│ enviarMensagemReview_onboardingNaoConcluido │ ✅               │
+├─────────────────────────────────────────────┼─────────────────┤
+│ enviarMensagemReview_desativaPlanoAnterior  │ ✅               │
+└─────────────────────────────────────────────┴─────────────────┘
 
-**[A1] Parser frágil do marcador "ONBOARDING_COMPLETO"**  
-`OnboardingService` depende de formato exato na resposta da IA: `"ONBOARDING_COMPLETO\n{json}"`.  
-Se o modelo inserir texto adicional ou formatar diferente, o `indexOf` falha e lança `RuntimeException`.  
-Não há retry, fallback ou validação de formato.
+PerformanceAnalyzerServiceTest (5 testes)
 
-**[A2] JSON do plano de estudos sem schema definido**  
-`plano_estudo.conteudo_json` aceita qualquer JSON válido.  
-`RecommendationService` e outros consumidores assumem estrutura específica sem validação formal.
+┌────────────────────────────────────────────────────────┬─────────────────┐
+│                        Cenário                         │ Status esperado │
+├────────────────────────────────────────────────────────┼─────────────────┤
+│ analisarDesempenho_semSessoes (zeros)                  │ ✅               │
+├────────────────────────────────────────────────────────┼─────────────────┤
+│ analisarDesempenho_calculaTaxaCorretamente             │ ✅               │
+├────────────────────────────────────────────────────────┼─────────────────┤
+│ analisarDesempenho_agrupaSessoesDoMesmoTopico          │ ✅               │
+├────────────────────────────────────────────────────────┼─────────────────┤
+│ analisarDesempenho_identificaTopicosMaisFracos (top 5) │ ✅               │
+├────────────────────────────────────────────────────────┼─────────────────┤
+│ analisarDesempenho_separaTopicosPorMateria             │ ✅               │
+└────────────────────────────────────────────────────────┴─────────────────┘
 
-**[A3] Sem fallback para IA indisponível**  
-Se a API Anthropic retornar erro HTTP, `AnthropicClient` propagará exceção não tratada.  
-Os endpoints `/onboarding/mensagem` e `/recomendacao` não têm tratamento de erro específico para falha da IA.
+RecommendationServiceTest (5 testes)
 
----
+┌───────────────────────────────────────────────────────────────────────┬─────────────────┐
+│                                Cenário                                │ Status esperado │
+├───────────────────────────────────────────────────────────────────────┼─────────────────┤
+│ gerarRecomendacao_sucesso                                             │ ✅               │
+├───────────────────────────────────────────────────────────────────────┼─────────────────┤
+│ gerarRecomendacao_limpaBlocoMarkdown                                  │ ✅               │
+├───────────────────────────────────────────────────────────────────────┼─────────────────┤
+│ gerarRecomendacao_jsonInvalido → ErroIntegracaoIAException            │ ✅               │
+├───────────────────────────────────────────────────────────────────────┼─────────────────┤
+│ gerarRecomendacao_iaIndisponivel                                      │ ✅               │
+├───────────────────────────────────────────────────────────────────────┼─────────────────┤
+│ gerarRecomendacao_incluiTopicosNoPrompt (verifica conteúdo do prompt) │ ✅               │
+└───────────────────────────────────────────────────────────────────────┴─────────────────┘
 
-### Qualidade de Código
+AuthControllerTest (4 testes — @SpringBootTest + MockMvc)
 
-**[Q1] Erros de digitação em nomes de migrations**  
-V3, V4 e V9 usam `"crate"` em vez de `"create"` no nome do arquivo. Não impede funcionamento mas prejudica legibilidade.
+┌──────────────────────────────────────────────┬─────────────────┐
+│                   Cenário                    │ Status esperado │
+├──────────────────────────────────────────────┼─────────────────┤
+│ login_sucesso → token JWT retornado          │ ✅               │
+├──────────────────────────────────────────────┼─────────────────┤
+│ login_semEmail → 400                         │ ✅               │
+├──────────────────────────────────────────────┼─────────────────┤
+│ registro_sucesso → 201                       │ ✅               │
+├──────────────────────────────────────────────┼─────────────────┤
+│ registro_senhaFraca (menos de 8 chars) → 400 │ ✅               │
+└──────────────────────────────────────────────┴─────────────────┘
 
-**[Q2] Imports não utilizados**  
-`UsuarioController` e `TopicoController` possuem imports desnecessários (`org.apache.tomcat.util.digester.Rule`, `org.w3c.dom.stylesheets.LinkStyle`).
+Partes sem teste
 
-**[Q3] Mensagens de exceção inconsistentes**  
-Sem padronização: algumas capitalizam ("Usuario nao encontrado"), outras não, algumas com acentos ("MAtéria nao encontrada").
+- AulaService — sem nenhum teste unitário
+- TarefaDescricaoService — sem nenhum teste
+- ResultadoSessaoService — sem nenhum teste
+- PerformanceAnalyzerService (campo topicoId em DadosDesempenhoTopico nunca é populado — sempre null — porque o agrupamento é feito por string, não por ID de entidade)
+- Todos os controllers exceto AuthController — sem testes de integração/camada web
+- SecurityUtils.verificarOwnership() — sem teste dedicado
+- JwtService — sem teste unitário para geração/validação de tokens
 
-**[Q4] Pacotes com sub-pacotes redundantes**  
-`infra.security.JwtService.JwtService`, `infra.security.SecurityConfig.SecurityConfig` etc. — o pacote tem o mesmo nome da classe, criando hierarquia desnecessária.
+  ---
+8. Problemas e Inconsistências
 
----
+Segurança
 
-### Design
+1. POST /resultados — usuarioId vem no body sem verificação de ownership. Um usuário autenticado pode registrar respostas em nome de qualquer outro (DadosCadastroResultado.usuarioId).
+2. POST /resultado-sessao — mesmo problema.
+3. GET /resultado-sessao/usuario/{id} — sem verificarOwnership, qualquer usuário autenticado vê sessões de qualquer outro.
+4. DELETE /usuarios/{id}, PUT /usuarios/{id} — não verifica se o usuário autenticado é ADMIN ou o próprio dono da conta.
+5. PUT /tarefas/{id}, DELETE /tarefas/{id} — sem verificação de ownership.
+6. Sem controle de papel — TODO existente em SecurityConfig. Qualquer usuário ALUNO pode criar/editar/apagar questões.
 
-**[D1] Sem auditoria de alterações**  
-Nenhuma entidade registra `updated_at`, `updated_by` ou histórico de mudanças.
+Nome de pacote com typo
 
-**[D2] Soft delete inconsistente**  
-`Materia`, `Topico`, `Questao` têm flag `ativa/ativo` (soft delete).  
-`Usuario` usa `ativo=false` mas nenhum endpoint exclui de fato.  
-`Resultado` e `ChatMensagem` não têm soft delete — deletar é permanente.
+- dto/output/performace/ — deveria ser performance. Não causa erro de compilação mas é inconsistente.
 
-**[D3] Sem documentação dos endpoints**  
-`springdoc-openapi-starter-webmvc-ui` está no `pom.xml` e a UI está habilitada, mas nenhum controller usa `@Operation`, `@ApiResponse` ou `@Tag`. A documentação gerada é incompleta.
+Teste com nome enganoso
 
-**[D4] Sem README ou documentação de setup**  
-Projeto não tem instruções de configuração, variáveis de ambiente necessárias ou diagrama de banco de dados.
+- MateriaServiceTest.buscarPorId_sucesso() — o @DisplayName diz "buscar por ID" mas o corpo do teste chama desativarMateria(1L). Provavelmente copy-paste de outro teste.
 
----
+Convenção de nome de classe
 
-## Resumo Executivo
+- questaoServiceTest — começa com letra minúscula, violando a convenção Java para nomes de classe.
 
-| Categoria | Total |
-|-----------|-------|
-| Problemas críticos | 4 |
-| Problemas de segurança | 5 |
-| Problemas de desempenho | 2 |
-| Problemas na integração IA | 3 |
-| Problemas de qualidade | 4 |
-| Problemas de design | 4 |
-| **Total** | **22** |
+Falta de timeout no AnthropicClient
 
-**Cobertura de testes:** ~37 testes existentes; 5 services críticos sem nenhuma cobertura.
+- RestClient.create() sem configuração de timeout. Uma chamada lenta à Anthropic pode bloquear a thread por minutos, potencialmente esgotando o pool de threads do servidor.
 
-**Prioridade de ação sugerida:**
-1. Remover segredos do `application.properties` (senha do banco, definir JWT_SECRET)
-2. Implementar atualização de senha corretamente
-3. Adicionar cascade delete ou definir comportamento esperado ao remover usuário
-4. Adicionar testes para `OnboardingService`, `PerformanceAnalyzerService` e `RecommendationService`
-5. Resolver inconsistência do `topicoId` obrigatório vs nullable no banco
-6. Tornar CORS configurável via variável de ambiente
-7. Corrigir problema N+1 no `PerformanceAnalyzerService`
-8. Adicionar tratamento de erro para falha da API Anthropic
+Campo topicoId sempre nulo em DadosDesempenhoTopico
+
+- PerformanceAnalyzerService constrói DadosDesempenhoTopico passando null como topicoId:
+  new DadosDesempenhoTopico(null, topicoNome, materiaNome, total, acertos, taxa)
+- O agrupamento é feito por topicoNome + "|" + materiaNome (string), sem lookup de ID. Isso significa que o frontend recebe topicoId: null e não pode navegar diretamente para o tópico.
+
+Histórico de chat não é limpo no review
+
+- ChatMensagemRepository.deleteAllByUsuarioId() existe mas nunca é chamado no review. O histórico cresce indefinidamente e é enviado inteiro a cada mensagem, podendo atingir o limite de tokens da Anthropic em usuários com
+  histórico longo.
+
+DadosAtualizacaoTopico sem materiaId
+
+- Não é possível mover um tópico para outra matéria via PUT /topicos/{id}. O campo materiaId não existe no DTO de atualização. Pode ser intencional, mas é uma limitação não documentada.
+
+PlanoEstudoController falta o endpoint de histórico
+
+- PlanoEstudoService.buscarHistoricoPorUsuario() existe e tem testes, mas não há nenhum endpoint em PlanoEstudoController que o exponha. O método está inacessível pelo frontend.
+
+Exception genérica no GlobalExceptionHandler
+
+- O handler de Exception genérico faz e.printStackTrace() em vez de usar um logger (@Slf4j), o que pode vazar stack traces em ambientes de produção nos logs mas não na resposta HTTP.
+
+  ---
+
+O projeto está em um estado funcional e bem estruturado para um MVP: a arquitetura em camadas está correta, o fluxo de onboarding com IA está implementado e testado, há 14 migrations Flyway sem divergências com as entidades,
+e a cobertura de testes unitários cobre os services principais (cerca de 55 testes no total). Os pontos mais críticos pendentes são de segurança: especificamente, os endpoints POST /resultados, POST /resultado-sessao, GET
+/resultado-sessao/usuario/{id}, PUT/DELETE /tarefas/{id}, PUT/DELETE /materias/{id} e os endpoints de /usuarios carecem de verificação de ownership ou restrição por papel — qualquer token JWT válido concede acesso excessivo a
+dados de outros usuários. O próximo passo lógico é fechar essas brechas de segurança: extrair o usuarioId do JWT em vez de receber no body nos endpoints de resultado/sessão, adicionar verificarOwnership nos PUT/DELETE de
+tarefas, matérias e tópicos, e implementar a distinção ADMIN/ALUNO que já está marcada como TODO na SecurityConfig.
+

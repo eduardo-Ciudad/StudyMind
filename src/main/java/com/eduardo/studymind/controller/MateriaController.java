@@ -76,7 +76,9 @@ public class MateriaController {
     @PutMapping("/{id}")
     public ResponseEntity<DadosDetalhamentoMateria> atualizar(
             @PathVariable Long id,
-            @RequestBody @Valid DadosAtualizacaoMateria dados) {
+            @RequestBody @Valid DadosAtualizacaoMateria dados,
+            Authentication authentication) {
+        SecurityUtils.verificarOwnership(materiaService.buscarDono(id), authentication);
         return ResponseEntity.ok(materiaService.atualizarMateria(id, dados));
     }
 
@@ -87,7 +89,8 @@ public class MateriaController {
             @ApiResponse(responseCode = "404", description = "Matéria não encontrada")
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> desativar(@PathVariable Long id) {
+    public ResponseEntity<Void> desativar(@PathVariable Long id, Authentication authentication) {
+        SecurityUtils.verificarOwnership(materiaService.buscarDono(id), authentication);
         materiaService.desativarMateria(id);
         return ResponseEntity.noContent().build();
     }

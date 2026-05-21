@@ -2,6 +2,7 @@ package com.eduardo.studymind.service;
 
 
 import com.eduardo.studymind.domain.materia.MateriaRepository;
+import com.eduardo.studymind.domain.tarefa.TarefaRepository;
 import com.eduardo.studymind.domain.topico.Topico;
 import com.eduardo.studymind.domain.topico.TopicoRepository;
 import com.eduardo.studymind.domain.usuario.UsuarioRepository;
@@ -91,6 +92,13 @@ public class TopicoService {
         var topico = topicoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Topico nao encontrado"));
         topico.setAtivo(false);
+    }
+
+    @Transactional(readOnly = true)
+    public Long buscarDono(Long id) {
+        return topicoRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Tarefa não encontrada"))
+                .getUsuario().getId();
     }
 }
 

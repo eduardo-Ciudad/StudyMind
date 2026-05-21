@@ -2,6 +2,7 @@ package com.eduardo.studymind.controller;
 
 import com.eduardo.studymind.dto.input.resultado.DadosCadastroResultadoSessao;
 import com.eduardo.studymind.dto.output.resultado.DadosResultadoSessaoOutput;
+import com.eduardo.studymind.infra.security.SecurityUtils;
 import com.eduardo.studymind.service.ResultadoSessaoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -11,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,8 +33,9 @@ public class ResultadoSessaoController {
     })
     @PostMapping
     public ResponseEntity<DadosResultadoSessaoOutput> salvar(
-            @RequestBody @Valid DadosCadastroResultadoSessao dados) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.salvar(dados));
+            @RequestBody @Valid DadosCadastroResultadoSessao dados, Authentication authentication) {
+        var usuario = SecurityUtils.getUsuarioAuthenticado(authentication);
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.salvar(dados, usuario.getId()));
     }
 
     @Operation(summary = "Listar resultados de sessão por usuário", description = "Retorna todas as sessões de estudo registradas do usuário")
@@ -44,7 +47,8 @@ public class ResultadoSessaoController {
 
     @GetMapping("/usuario/{usuarioId}")
     public ResponseEntity<List<DadosResultadoSessaoOutput>> listarPorUsuario(
-            @PathVariable Long usuarioId) {
+            @PathVariable Long usuarioId, Authentication authentication) {
+        SecurityUtils.verificarOwnership(usuarioId, authentication);
         return ResponseEntity.ok(service.listarPorUsuario(usuarioId));
     }
 }

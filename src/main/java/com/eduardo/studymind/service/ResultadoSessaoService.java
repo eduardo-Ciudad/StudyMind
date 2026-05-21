@@ -19,8 +19,8 @@ public class ResultadoSessaoService {
     private final ResultadoSessaoRepository repository;
     private final UsuarioRepository usuarioRepository;
 
-    public DadosResultadoSessaoOutput salvar(DadosCadastroResultadoSessao dados) {
-        Usuario usuario = usuarioRepository.findById(dados.usuarioId())
+    public DadosResultadoSessaoOutput salvar(DadosCadastroResultadoSessao dados, Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado"));
 
         double taxaAcerto = dados.totalQuestoes() > 0

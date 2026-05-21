@@ -81,7 +81,9 @@ public class TopicoController {
     @PutMapping("/{id}")
     public ResponseEntity<DadosDetalhamentoTopico> atualizar(
             @PathVariable Long id,
-            @RequestBody @Valid DadosAtualizacaoTopico dados) {
+            @RequestBody @Valid DadosAtualizacaoTopico dados,
+            Authentication authentication) {
+        SecurityUtils.verificarOwnership(topicoService.buscarDono(id), authentication);
         return ResponseEntity.ok(topicoService.atualizar(id, dados));
     }
 
@@ -92,7 +94,8 @@ public class TopicoController {
             @ApiResponse(responseCode = "404", description = "Tópico não encontrado")
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> desativar(@PathVariable Long id) {
+    public ResponseEntity<Void> desativar(@PathVariable Long id, Authentication authentication) {
+        SecurityUtils.verificarOwnership(topicoService.buscarDono(id), authentication);
         topicoService.desativar(id);
         return ResponseEntity.noContent().build();
     }

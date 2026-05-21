@@ -102,4 +102,11 @@ public class TarefaService {
 
         tarefa.setStatus(TarefaStatus.CANCELADA);
     }
+
+    @Transactional(readOnly = true)
+    public Long buscarDono(Long id) {
+        return tarefaRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Tarefa não encontrada"))
+                .getUsuario().getId();
+    }
 }

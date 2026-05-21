@@ -74,4 +74,11 @@ public class MateriaService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Materia nao encontrada"));
         materia.setAtiva(false);
     }
+
+    @Transactional(readOnly = true)
+    public Long buscarDono(Long id) {
+        return materiaRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Tarefa não encontrada"))
+                .getUsuario().getId();
+    }
 }

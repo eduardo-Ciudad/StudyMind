@@ -3,7 +3,13 @@
     "allow": [
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\eduar\\\\studymind\" -Recurse -Directory)",
       "Bash(Select-Object -First 20)",
-      "Bash(Format-Table FullName)"
+      "Bash(Format-Table FullName)",
+      "Bash(Get-ChildItem -Recurse -Path \"src\")",
+      "Bash(Select-Object FullName)",
+      "Bash(ConvertTo-Csv -NoTypeInformation)",
+      "Bash(Out-String)",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\eduar\\\\studymind\\\\src\\\\main\\\\java\\\\com\\\\eduardo\\\\studymind\\\\controller\" -Filter \"*.java\")",
+      "Bash(Select-Object -ExpandProperty Name)"
     ]
   }
 }
