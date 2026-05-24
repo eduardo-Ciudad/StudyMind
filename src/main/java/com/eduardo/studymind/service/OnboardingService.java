@@ -50,16 +50,17 @@ public class OnboardingService {
         ONBOARDING_COMPLETO
         {"vestibular":"UNESP","dataExame":"2026-11-15","horasPorDia":3,"versao":1,"materias":[{"nome":"Matemática","descricao":"Matemática para vestibular","topicos":[{"nome":"Funções","nivel":"MEDIO","descricao":"Funções quadráticas e exponenciais"}]}],"semanas":[{"numero":1,"tarefas":[{"topicoNome":"Funções","materiaNome":"Matemática","tipo":"REVISAO","descricao":"Revisar conceitos de funções quadráticas","meta":10}]}]}
 
-        Regras OBRIGATÓRIAS do JSON:
-        - Gere exatamente 6 semanas
-        - Cada semana deve ter no mínimo 3 tarefas e no máximo 5 tarefas
-        - nivel deve ser exatamente: FACIL, MEDIO ou DIFICIL
-        - tipo deve ser exatamente: QUESTOES, REVISAO ou META_ACERTO
-        - meta é um número inteiro positivo
-        - dataExame no formato yyyy-MM-dd
-        - Inclua apenas matérias e tópicos mencionados pelo aluno
-        - Priorize tópicos com nivel DIFICIL nas primeiras semanas
-        - Responda SOMENTE com ONBOARDING_COMPLETO seguido do JSON, sem texto antes ou depois
+            Regras OBRIGATÓRIAS do JSON:
+            - Gere exatamente 6 semanas
+            - Cada semana deve ter exatamente 3 tarefas, nem mais nem menos
+            - Inclua no máximo 5 matérias no plano, priorizando as com nivel DIFICIL
+            - nivel deve ser exatamente: FACIL, MEDIO ou DIFICIL
+            - tipo deve ser exatamente: QUESTOES, REVISAO ou META_ACERTO
+            - meta é um número inteiro positivo
+            - dataExame no formato yyyy-MM-dd
+            - Inclua apenas matérias e tópicos mencionados pelo aluno
+            - Priorize tópicos com nivel DIFICIL nas primeiras semanas
+            - Responda SOMENTE com ONBOARDING_COMPLETO seguido do JSON, sem texto antes ou depois
         """;
 
     private static final String SYSTEM_PROMPT_REVIEW = """
