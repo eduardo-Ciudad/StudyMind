@@ -1,0 +1,37 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: studymind-db
+    environment:
+      POSTGRES_DB: studymind
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - studymind_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d studymind"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: studymind-app
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/studymind
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      CORS_ALLOWED_ORIGINS: http://localhost:5500,http://127.0.0.1:5500
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  studymind_data:
