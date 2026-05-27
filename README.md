@@ -3,10 +3,11 @@
 ![Java](https://img.shields.io/badge/Java-17-orange?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-336791?style=for-the-badge&logo=postgresql&logoColor=white)
-![Flyway](https://img.shields.io/badge/Flyway-V1--V12-CC0200?style=for-the-badge&logo=flyway&logoColor=white)
+![Flyway](https://img.shields.io/badge/Flyway-V1--V14-CC0200?style=for-the-badge&logo=flyway&logoColor=white)
 ![Spring Security](https://img.shields.io/badge/Spring_Security-JWT-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white)
 ![Anthropic](https://img.shields.io/badge/Anthropic-Claude_Haiku-purple?style=for-the-badge)
-![JUnit](https://img.shields.io/badge/Tests-37_Passing-success?style=for-the-badge)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![JUnit](https://img.shields.io/badge/Tests-54_Passing-success?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Active_Development-yellow?style=for-the-badge)
 
 > AI-powered study planning platform that creates personalized 12-week study roadmaps through a conversational onboarding experience.
@@ -63,8 +64,15 @@ Based on this conversation, the system generates a **personalized 12-week study 
 - Ownership verification — users can only access their own data
 - CORS configured for frontend integration
 - Role-based authorization (ADMIN / ALUNO) — roles defined, endpoint-level restrictions planned (see Roadmap)
+
+### 🐳 Docker
+- Fully containerized with `Dockerfile` and `docker-compose.yml`
+- Single command to run the entire stack (API + PostgreSQL)
+- Environment variables managed via `.env` file
+- Ready for local development and deployment
+
 ### 🧪 Testing
-- 37 automated test scenarios
+- 54 automated test scenarios
 - Unit tests with Mockito and ArgumentCaptor
 - Integration tests with `@SpringBootTest` and MockMvc
 
@@ -154,12 +162,13 @@ Usuario
 | Framework | Spring Boot 3.5 |
 | Database | PostgreSQL 17 |
 | ORM | Spring Data JPA / Hibernate |
-| Migrations | Flyway (V1–V12) |
+| Migrations | Flyway (V1–V14) |
 | Security | Spring Security + Auth0 JWT |
 | AI Integration | Anthropic Claude Haiku via RestClient |
 | Validation | Jakarta Bean Validation |
 | Testing | JUnit 5, Mockito, MockMvc |
 | Build | Maven |
+| Containerization | Docker + Docker Compose |
 | Utilities | Lombok |
 
 ---
@@ -189,7 +198,7 @@ src/main/java/com/eduardo/studymind/
     └── parser/          ← PlanoEstudoParser
 
 src/main/resources/
-├── db/migration/        ← Flyway scripts V1–V12
+├── db/migration/        ← Flyway scripts V1–V14
 ├── application.properties
 ├── application-dev.properties
 └── application-prod.properties
@@ -242,8 +251,7 @@ src/main/resources/
 ### Prerequisites
 
 - Java 17+
-- PostgreSQL 17+
-- Maven 3.9+
+- Docker + Docker Compose (recommended)
 - Anthropic API key ([console.anthropic.com](https://console.anthropic.com))
 
 ### Clone the Repository
@@ -251,12 +259,6 @@ src/main/resources/
 ```bash
 git clone https://github.com/educiudad/studymind.git
 cd studymind
-```
-
-### Create the Database
-
-```sql
-CREATE DATABASE studymind;
 ```
 
 ### Configure Environment Variables
@@ -271,15 +273,21 @@ JWT_SECRET=your_jwt_secret_key_min_32_chars
 ANTHROPIC_API_KEY=your_anthropic_api_key
 ```
 
-If using IntelliJ IDEA, configure these under `Run > Edit Configurations > Environment Variables`.
+### Run with Docker (Recommended)
 
-### Run the Application
+```bash
+docker-compose up --build
+```
+
+This starts both the API and a PostgreSQL instance. Flyway will automatically apply all 14 migrations on startup.
+
+### Run Locally (Without Docker)
+
+Requires Java 17+ and PostgreSQL 17+ installed locally.
 
 ```bash
 ./mvnw spring-boot:run
 ```
-
-Flyway will automatically apply all 12 migrations on startup.
 
 ### Run Tests
 
@@ -304,15 +312,15 @@ Flyway will automatically apply all 12 migrations on startup.
 - [x] Conversational onboarding (12-week plan)
 - [x] Auto-population of subjects, topics and tasks from AI plan
 - [x] Study plan versioning and review cycle
-- [x] 37 automated tests
+- [x] 54 automated tests
 - [x] Swagger/OpenAPI documentation
+- [x] Docker + docker-compose
 
 ### 🔄 In Progress
 - [ ] Tests for `OnboardingService` and `PlanoEstudoParser`
 - [ ] Frontend prototype connected to the real API
 
 ### 🔮 Future
-- [ ] Docker + docker-compose
 - [ ] CI/CD pipeline
 - [ ] Refresh token support
 - [ ] Notifications and reminders
@@ -331,7 +339,7 @@ The ultimate goal of StudyMind is for a student to simply answer a few questions
 
 **Eduardo Ciudad Figueredo** — Backend Java Developer
 
-[![GitHub](https://img.shields.io/badge/GitHub-eduardo-Ciudad-181717?style=flat&logo=github)](https://github.com/eduardo-Ciudad)
+[![GitHub](https://img.shields.io/badge/GitHub-educiudad-181717?style=flat&logo=github)](https://github.com/educiudad)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Eduardo_Ciudad-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/eduardo-ciudad-figueredo/)
 
 ---
@@ -339,4 +347,3 @@ The ultimate goal of StudyMind is for a student to simply answer a few questions
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
-
