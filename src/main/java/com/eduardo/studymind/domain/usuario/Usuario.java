@@ -60,7 +60,7 @@ public class Usuario  implements UserDetails {
     private Role role;
 
     @Column(nullable = false)
-    private Boolean ativo = true;
+    private Boolean ativo = false;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime criadoEm = LocalDateTime.now();
