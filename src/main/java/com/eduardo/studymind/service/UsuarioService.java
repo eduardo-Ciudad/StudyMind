@@ -24,6 +24,8 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TokenVerificacaoService tokenVerificacaoService;
+
 
     @Transactional
     public DadosDetalhamentoUsuario cadastrarUsuario(DadosCadastroUsuario dados){
@@ -36,9 +38,12 @@ public class UsuarioService {
         usuario.setEmail(dados.email());
         usuario.setSenha(passwordEncoder.encode(dados.senha()));
         usuario.setRole(Role.ALUNO);
-        usuario.setAtivo(true);
+        usuario.setAtivo(false);
 
         var usuarioSalvo = usuarioRepository.save(usuario);
+        tokenVerificacaoService.gerarEEnviarToken(usuarioSalvo);
+
+
         return  new DadosDetalhamentoUsuario(usuarioSalvo);
 
     }
