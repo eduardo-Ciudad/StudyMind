@@ -7,6 +7,7 @@ import com.eduardo.studymind.dto.input.usuario.DadosCadastroUsuario;
 import com.eduardo.studymind.dto.output.jwt.DadosTokenJwt;
 import com.eduardo.studymind.dto.output.usuario.DadosDetalhamentoUsuario;
 import com.eduardo.studymind.infra.security.JwtService;
+import com.eduardo.studymind.service.TokenVerificacaoService;
 import com.eduardo.studymind.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -18,10 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Autenticação", description = "Endpoints para autenticação e registro de usuários")
 @RestController
@@ -32,6 +30,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UsuarioService usuarioService;
+    private final TokenVerificacaoService tokenVerificacaoService;
 
     @Operation(summary = "Realizar login", description = "Autentica o usuário com email e senha e retorna um token JWT")
     @ApiResponses({
@@ -57,5 +56,16 @@ public class AuthController {
     public ResponseEntity<DadosDetalhamentoUsuario> registrar(@RequestBody @Valid DadosCadastroUsuario dados) {
         var usuario = usuarioService.cadastrarUsuario(dados);
         return ResponseEntity.status(HttpStatus.CREATED).body(usuario);
+    }
+
+    @Operation(summary = "Verificar email", description = "Ativa a conta do usuário a partir do token enviado por email")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Email verificado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Token inválido ou expirado")
+    })
+    @GetMapping("/verificar")
+    public ResponseEntity<String> verificar(@RequestParam String token) {
+        tokenVerificacaoService.verificarToken(token);
+        return ResponseEntity.ok("Email verificado com sucesso! Você já pode fazer login.");
     }
 }
