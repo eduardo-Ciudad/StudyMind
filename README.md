@@ -78,11 +78,11 @@ Based on this conversation, the system generates a **personalized 12-week study 
 
 ---
 
-## 🏗️ Architecture
+## 📐 Arquitetura
 
-```text
-Controller → Service → Repository
-```
+Diagrama interativo com entidades, services, fluxos de segurança e camada de IA:
+
+👉 [Ver arquitetura do sistema](https://eduardo-ciudad.github.io/studymind-arquitetura/)
 
 **Key architectural decisions:**
 
