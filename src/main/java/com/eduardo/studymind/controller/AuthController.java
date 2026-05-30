@@ -68,4 +68,6 @@ public class AuthController {
         tokenVerificacaoService.verificarToken(token);
         return ResponseEntity.ok("Email verificado com sucesso! Você já pode fazer login.");
     }
+
+
 }
