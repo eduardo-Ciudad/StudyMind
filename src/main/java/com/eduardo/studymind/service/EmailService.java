@@ -28,7 +28,7 @@ public class EmailService {
     @Async
     public void enviarEmailVerificacao(Usuario usuario, String token){
         String assunto = "Verifique seu email - StudyMind";
-        String url = urlSite + "/auth/verifica?token=" + token;
+        String url = urlSite + "/auth/verificar?token=" + token;
         String conteudo = gerarConteudo(usuario.getNome(), url);
         enviarEmail(usuario.getEmail(), assunto, conteudo);
     }
