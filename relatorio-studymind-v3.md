@@ -1,969 +1,413 @@
 # Relatório Técnico — StudyMind v3
 
-> Gerado em: 2026-05-28  
-> Projeto: `com.eduardo.studymind`  
-> Stack: Spring Boot 3.5.14 · Java 17 · PostgreSQL · Flyway · JWT · Anthropic Claude API
+> Gerado em: 2026-05-31  
+> Repositório: `C:\Users\eduar\studymind` (branch `main`)  
+> Base: análise estática de todos os arquivos `.java`, `.sql`, `.properties` e `pom.xml`
 
 ---
 
-## 1. Estrutura de Pacotes
+## 1. Visão Geral do Projeto
+
+O **StudyMind** é uma plataforma educacional com IA generativa voltada para vestibulandos brasileiros. O sistema conduz um onboarding conversacional com o aluno, coleta preferências de estudo e gera automaticamente um plano personalizado de 6 semanas usando a API da Anthropic (Claude Haiku).
+
+### Stack tecnológica
+
+| Camada | Tecnologia |
+|--------|-----------|
+| Linguagem | Java 17 |
+| Framework | Spring Boot 3.5.14 |
+| Banco de dados | PostgreSQL 17 |
+| Migrações | Flyway (V1 a V15) |
+| Segurança | Spring Security + JWT (Auth0 `java-jwt` 4.4.0) |
+| IA Generativa | Anthropic Claude Haiku (`claude-haiku-4-5-20251001`) |
+| Documentação | SpringDoc OpenAPI 2.8.8 (Swagger UI) |
+| Email | Spring Mail via SMTP Gmail |
+| Build | Maven 3.x |
+| Testes | JUnit 5 + Mockito + MockMvc |
+
+### Arquitetura
 
 ```
-com.eduardo.studymind
-├── StudymindApplication.java                  (entry point)
-│
-├── controller/
-│   ├── AuthController.java
-│   ├── AulaController.java
-│   ├── DashboardController.java
-│   ├── DiagnosticoController.java
-│   ├── MateriaController.java
-│   ├── OnboardingController.java
-│   ├── PlanoEstudoController.java
-│   ├── QuestaoController.java
-│   ├── RecomendacaoController.java
-│   ├── ResultadoController.java
-│   ├── ResultadoSessaoController.java
-│   ├── TarefaController.java
-│   ├── TopicoController.java
-│   └── UsuarioController.java
-│
-├── domain/
-│   ├── chat/
-│   │   ├── ChatMensagem.java          (entity)
-│   │   ├── ChatMensagemRepository.java
-│   │   └── RoleChat.java              (enum: USER, ASSISTANT)
-│   ├── materia/
-│   │   ├── Materia.java               (entity)
-│   │   └── MateriaRepository.java
-│   ├── plano/
-│   │   ├── PlanoEstudo.java           (entity)
-│   │   └── PlanoEstudoRepository.java
-│   ├── questao/
-│   │   ├── Questao.java               (entity)
-│   │   ├── QuestaoRepository.java
-│   │   └── TipoQuestao.java           (enum: MULTIPLA_ESCOLHA, VERDADEIRO_FALSO, DISSERTATIVA)
-│   ├── resultado/
-│   │   ├── RespostaStatus.java        (enum: CORRETO, INCORRETO, PULADO)
-│   │   ├── Resultado.java             (entity)
-│   │   ├── ResultadoRepository.java
-│   │   ├── ResultadoSessao.java       (entity)
-│   │   └── ResultadoSessaoRepository.java
-│   ├── tarefa/
-│   │   ├── Tarefa.java                (entity)
-│   │   ├── TarefaRepository.java
-│   │   ├── TarefaStatus.java          (enum: PENDENTE, EM_ANDAMENTO, CONCLUIDA, CANCELADA)
-│   │   └── TipoTarefa.java            (enum: QUESTOES, REVISAO, META_ACERTO)
-│   ├── token/
-│   │   ├── TokenVerificacao.java      (entity)
-│   │   └── TokenVerificacaoRepository.java
-│   ├── topico/
-│   │   ├── NivelDificuldade.java      (enum: FACIL, MEDIO, DIFICIL)
-│   │   ├── Topico.java                (entity)
-│   │   └── TopicoRepository.java
-│   └── usuario/
-│       ├── Role.java                  (enum: ADMIN, ALUNO)
-│       ├── Usuario.java               (entity, implements UserDetails)
-│       └── UsuarioRepository.java
-│
-├── dto/
-│   ├── input/
-│   │   ├── login/         DadosLogin
-│   │   ├── materia/       DadosCadastroMateria, DadosAtualizacaoMateria
-│   │   ├── onboarding/    DadosMensagemChat
-│   │   ├── questao/       DadosCadastroQuestao, DadosAtualizacaoQuestao
-│   │   ├── resultado/     DadosCadastroResultado, DadosCadastroResultadoSessao
-│   │   ├── tarefa/        DadosCadastroTarefa, DadosAtualizacaoTarefa
-│   │   ├── topico/        DadosCadastroTopico, DadosAtualizacaoTopico
-│   │   └── usuario/       DadosCadastroUsuario, DadosAtualizacaoUsuario
-│   └── output/
-│       ├── aulaoutput/           DadosAulaOutput
-│       ├── erros/                DadosErro
-│       ├── jwt/                  DadosTokenJwt
-│       ├── materia/              DadosDetalhamentoMateria, DadosListagemMateria
-│       ├── onboarding/           DadosRespostaChat, DadosStatusOnboarding
-│       ├── performance/          DadosDesempenhoTopico, DadosDesempenhoUsuario
-│       ├── plano/                DadosPlanoEstudo
-│       ├── questao/              DadosDetalhamentoQuestao, DadosListagemQuestao
-│       ├── questaogerada/        DadosQuestaoGerada
-│       ├── questoesoutput/       DadosQuestoesOutput
-│       ├── recomendacao/         DadosRecomendacao
-│       ├── resultado/            DadosDetalhamentoResultado, DadosListagemResultados, DadosResultadoSessaoOutput
-│       ├── tarefa/               DadosDetalhamentoTarefa, DadosListagemTarefa
-│       ├── tarefadescricaooutput/ DadosTarefaDescricao
-│       ├── topico/               DadosDetalhamentoTopico, DadosListagemTopico
-│       └── usuario/              DadosDetalhamentoUsuario, DadosListagemUsuario
-│
-├── exception/
-│   ├── ErroIntegracaoIAException.java
-│   ├── GlobalExceptionHandler.java
-│   ├── RecursoNaoEncontradoException.java
-│   └── RegrasDeNegocioException.java
-│
-├── infra/
-│   ├── ia/
-│   │   ├── AIClient.java              (interface)
-│   │   └── AnthropicClient.java       (implementation)
-│   └── security/
-│       ├── AuthFilter.java
-│       ├── JwtService.java
-│       ├── SecurityConfig.java
-│       ├── SecurityUtils.java
-│       └── UserDetailsServiceImpl.java
-│
-└── service/
-    ├── AulaService.java
-    ├── EmailService.java
-    ├── MateriaService.java
-    ├── OnboardingService.java
-    ├── PerformanceAnalyzerService.java
-    ├── PlanoEstudoService.java
-    ├── QuestaoService.java
-    ├── RecommendationService.java
-    ├── ResultadoService.java
-    ├── ResultadoSessaoService.java
-    ├── TarefaDescricaoService.java
-    ├── TarefaService.java
-    ├── TokenVerificacaoService.java
-    ├── TopicoService.java
-    ├── UsuarioService.java
-    └── parser/
-        └── PlanoEstudoParser.java
+Controller (REST) → Service → Repository (JPA) → PostgreSQL
+                ↓
+           AIClient (interface)
+                ↓
+        AnthropicClient (HTTP/RestClient)
 ```
 
----
-
-## 2. Entidades
-
-### `Usuario` — tabela `usuarios`
-| Campo | Tipo Java | Coluna SQL | Restrições |
-|---|---|---|---|
-| `id` | `Long` | `id` | PK, BIGSERIAL |
-| `nome` | `String` | `nome` | NOT NULL, length 100 |
-| `email` | `String` | `email` | NOT NULL, UNIQUE |
-| `senha` | `String` | `senha` | NOT NULL (hash BCrypt) |
-| `role` | `Role` (enum) | `role` | NOT NULL, EnumType.STRING |
-| `ativo` | `Boolean` | `ativo` | NOT NULL, default `false` |
-| `criadoEm` | `LocalDateTime` | `criado_em` | NOT NULL, updatable=false |
-| `onboardingConcluido` | `Boolean` | `onboarding_concluido` | NOT NULL, default `false` |
-
-**Implements:** `UserDetails` (Spring Security)  
-**Relacionamentos:** nenhum FK declarado diretamente; é referenciado por todas as demais entidades.
-
----
-
-### `Materia` — tabela `materias`
-| Campo | Tipo Java | Restrições |
-|---|---|---|
-| `id` | `Long` | PK |
-| `usuario` | `Usuario` | `@ManyToOne LAZY`, FK `usuario_id` NOT NULL |
-| `nome` | `String` | NOT NULL, length 100 |
-| `descricao` | `String` | length 255 |
-| `ativa` | `Boolean` | NOT NULL, default `true` |
-
----
-
-### `Topico` — tabela `topicos`
-| Campo | Tipo Java | Restrições |
-|---|---|---|
-| `id` | `Long` | PK |
-| `usuario` | `Usuario` | `@ManyToOne LAZY`, FK `usuario_id` NOT NULL |
-| `nome` | `String` | NOT NULL, length 150 |
-| `descricao` | `String` | length 500 |
-| `materia` | `Materia` | `@ManyToOne LAZY`, FK `materia_id` NOT NULL |
-| `nivel` | `NivelDificuldade` (enum) | NOT NULL, EnumType.STRING |
-| `ativo` | `Boolean` | NOT NULL, default `true` |
-
----
-
-### `Questao` — tabela `questoes`
-| Campo | Tipo Java | Restrições |
-|---|---|---|
-| `id` | `Long` | PK |
-| `enunciado` | `String` | NOT NULL, length 1000 |
-| `tipo` | `TipoQuestao` (enum) | NOT NULL, EnumType.STRING |
-| `topico` | `Topico` | `@ManyToOne LAZY`, FK `topico_id` NOT NULL |
-| `ativa` | `Boolean` | NOT NULL, default `true` |
-
----
-
-### `Resultado` — tabela `resultados`
-| Campo | Tipo Java | Restrições |
-|---|---|---|
-| `id` | `Long` | PK |
-| `usuario` | `Usuario` | `@ManyToOne LAZY`, FK `usuario_id` NOT NULL |
-| `questao` | `Questao` | `@ManyToOne LAZY`, FK `questao_id` NOT NULL |
-| `status` | `RespostaStatus` (enum) | NOT NULL, EnumType.STRING |
-| `respostaUsuario` | `String` | length 1000 |
-| `respondidoEm` | `LocalDateTime` | NOT NULL, updatable=false |
-
----
-
-### `ResultadoSessao` — tabela `resultado_sessoes`
-| Campo | Tipo Java | Restrições |
-|---|---|---|
-| `id` | `Long` | PK |
-| `usuario` | `Usuario` | `@ManyToOne LAZY`, FK `usuario_id` NOT NULL |
-| `topicoNome` | `String` | NOT NULL, length 150 |
-| `materiaNome` | `String` | NOT NULL, length 100 |
-| `totalQuestoes` | `Integer` | NOT NULL |
-| `acertos` | `Integer` | NOT NULL |
-| `taxaAcerto` | `Double` | NOT NULL (calculado: acertos/total × 100) |
-| `respondidoEm` | `LocalDateTime` | NOT NULL, updatable=false |
-
-> Armazena o resultado agregado de uma sessão de prática (sem vínculo FK com Topico/Materia, usa nome textual).
-
----
-
-### `Tarefa` — tabela `tarefas`
-| Campo | Tipo Java | Restrições |
-|---|---|---|
-| `id` | `Long` | PK |
-| `usuario` | `Usuario` | `@ManyToOne LAZY`, FK `usuario_id` NOT NULL |
-| `topico` | `Topico` | `@ManyToOne LAZY`, FK `topico_id` nullable |
-| `tipo` | `TipoTarefa` (enum) | NOT NULL, EnumType.STRING |
-| `descricao` | `String` | NOT NULL, length 255 |
-| `meta` | `Integer` | NOT NULL |
-| `prazo` | `LocalDate` | nullable |
-| `status` | `TarefaStatus` (enum) | NOT NULL, default `PENDENTE` |
-| `criadaEm` | `LocalDateTime` | NOT NULL, updatable=false |
-
----
-
-### `PlanoEstudo` — tabela `plano_estudo`
-| Campo | Tipo Java | Restrições |
-|---|---|---|
-| `id` | `Long` | PK |
-| `usuario` | `Usuario` | `@ManyToOne LAZY`, FK `usuario_id` NOT NULL |
-| `conteudoJson` | `String` | NOT NULL, TEXT (JSON completo do plano gerado pela IA) |
-| `versao` | `Integer` | NOT NULL |
-| `ativo` | `Boolean` | NOT NULL |
-| `criadoEm` | `LocalDateTime` | NOT NULL, updatable=false |
-
----
-
-### `ChatMensagem` — tabela `chat_mensagens`
-| Campo | Tipo Java | Restrições |
-|---|---|---|
-| `id` | `Long` | PK |
-| `usuario` | `Usuario` | `@ManyToOne LAZY`, FK `usuario_id` NOT NULL |
-| `role` | `RoleChat` (enum) | NOT NULL, length 20, EnumType.STRING |
-| `conteudo` | `String` | NOT NULL, TEXT |
-| `criadoEm` | `LocalDateTime` | NOT NULL, updatable=false |
-
----
-
-### `TokenVerificacao` — tabela `tokens_verificacao`
-| Campo | Tipo Java | Restrições |
-|---|---|---|
-| `id` | `Long` | PK |
-| `token` | `String` | NOT NULL, UNIQUE (UUID gerado no construtor) |
-| `usuario` | `Usuario` | `@OneToOne LAZY`, FK `usuario_id` NOT NULL |
-| `expiracao` | `LocalDateTime` | NOT NULL (agora + 24h) |
-| `utilizado` | `Boolean` | NOT NULL, default `false` |
-
-**Métodos:** `isExpirado()` — verifica se `LocalDateTime.now()` > `expiracao`  
-**Métodos:** `marcarComoUtilizado()` — seta `utilizado = true`
-
----
-
-## 3. Repositórios
-
-### `UsuarioRepository` extends `JpaRepository<Usuario, Long>`
-| Método | Descrição |
-|---|---|
-| `findByEmail(String email)` | Busca usuário por e-mail (usado no login e no `UserDetailsService`) |
-| `existsByEmail(String email)` | Verifica se e-mail já está cadastrado |
-| `findAllByAtivoTrue(Pageable pageable)` | Lista paginada apenas de usuários ativos |
-
----
-
-### `MateriaRepository` extends `JpaRepository<Materia, Long>`
-| Método | Descrição |
-|---|---|
-| `findAllByAtivaTrue()` | Lista todas as matérias ativas (global) |
-| `findAllByUsuarioIdAndAtivaTrue(Long usuarioId)` | Lista matérias ativas do usuário |
-| `findByNomeAndUsuarioId(String nome, Long usuarioId)` | Busca matéria pelo nome dentro do usuário |
-| `existsByNomeAndUsuarioId(String nome, Long usuarioId)` | Verifica duplicidade de nome por usuário |
-
----
-
-### `TopicoRepository` extends `JpaRepository<Topico, Long>`
-| Método | Descrição |
-|---|---|
-| `findAllByAtivoTrue()` | Lista todos os tópicos ativos |
-| `findAllByUsuarioIdAndAtivoTrue(Long usuarioId)` | Tópicos ativos do usuário |
-| `findAllByMateriaIdAndAtivoTrue(Long materiaId)` | Tópicos ativos de uma matéria |
-| `findByNomeAndMateriaIdAndUsuarioId(String nome, Long materiaId, Long usuarioId)` | Busca tópico por nome+matéria+usuário |
-| `existsByNomeAndMateriaId(String nome, Long materiaId)` | Verifica duplicidade nome+matéria |
-| `findByNomeAndMateriaNome(String nome, String materiaNome)` | Busca por nome do tópico e nome da matéria (usado no `PerformanceAnalyzerService`) |
-| `findAllByAtivoTrueWithMateriaAndUsuarioId(Long usuarioId)` | **@Query JPQL** — busca tópicos com JOIN FETCH de matéria para o usuário |
-
----
-
-### `QuestaoRepository` extends `JpaRepository<Questao, Long>`
-| Método | Descrição |
-|---|---|
-| `findAllByTopicoIdAndAtivaTrue(Long topicoId)` | Questões ativas de um tópico |
-| `findByAtivaTrue(Pageable pageable)` | Listagem paginada de questões ativas |
-
----
-
-### `ResultadoRepository` extends `JpaRepository<Resultado, Long>`
-| Método | Descrição |
-|---|---|
-| `findAllByUsuarioId(Long usuarioId, Pageable pageable)` | Resultados paginados do usuário |
-| `findAllByUsuarioIdAndQuestaoTopicoId(Long usuarioId, Long topicoId)` | Resultados do usuário num tópico |
-| `countByUsuarioIdAndQuestaoTopicoIdAndStatus(Long usuarioId, Long topicoId, RespostaStatus status)` | Conta respostas por status (alimenta cálculo de taxa de acerto) |
-
----
-
-### `ResultadoSessaoRepository` extends `JpaRepository<ResultadoSessao, Long>`
-| Método | Descrição |
-|---|---|
-| `findByUsuarioIdOrderByRespondidoEmDesc(Long usuarioId)` | Histórico de sessões mais recentes primeiro |
-| `findByUsuarioId(Long usuarioId)` | Todas as sessões do usuário (usado no `PerformanceAnalyzerService`) |
-
----
-
-### `TarefaRepository` extends `JpaRepository<Tarefa, Long>`
-| Método | Descrição |
-|---|---|
-| `findAllByUsuarioIdAndStatusNot(Long usuarioId, TarefaStatus status)` | Tarefas excluindo um status (ex: sem CANCELADA) |
-| `findAllByUsuarioIdAndStatus(Long usuarioId, TarefaStatus status)` | Tarefas com status específico |
-| `findAllByUsuarioIdAndTopicoId(Long usuarioId, Long topicoId)` | Tarefas de um tópico |
-| `existsByUsuarioIdAndTopicoIdAndStatus(Long usuarioId, Long topicoId, TarefaStatus status)` | Verifica existência de tarefa pendente |
-| `findByIdWithTopico(Long id)` | **@Query JPQL** — busca tarefa com LEFT JOIN FETCH de tópico e matéria |
-
----
-
-### `PlanoEstudoRepository` extends `JpaRepository<PlanoEstudo, Long>`
-| Método | Descrição |
-|---|---|
-| `findByUsuarioIdAndAtivoTrue(Long usuarioId)` | Plano ativo do usuário |
-| `findAllByUsuarioIdOrderByVersaoAsc(Long usuarioId)` | Histórico de planos em ordem de versão |
-| `existsByUsuarioId(Long usuarioId)` | Verifica se usuário possui algum plano |
-
----
-
-### `ChatMensagemRepository` extends `JpaRepository<ChatMensagem, Long>`
-| Método | Descrição |
-|---|---|
-| `findAllByUsuarioIdOrderByCriadoEmAsc(Long usuarioId)` | Histórico de chat em ordem cronológica |
-| `deleteAllByUsuarioId(Long usuarioId)` | Limpa o histórico após conclusão do onboarding |
-
----
-
-### `TokenVerificacaoRepository` extends `JpaRepository<TokenVerificacao, Long>`
-| Método | Descrição |
-|---|---|
-| `findByToken(String token)` | Busca token de verificação por valor UUID |
-
----
-
-## 4. Services
-
-### `UsuarioService`
-| Método | Parâmetros | Retorno | Descrição |
-|---|---|---|---|
-| `cadastrarUsuario` | `DadosCadastroUsuario` | `DadosDetalhamentoUsuario` | Cria usuário (ativo=false), gera e envia token de verificação |
-| `listar` | `Pageable` | `Page<DadosListagemUsuario>` | Lista usuários ativos paginados |
-| `buscarPorId` | `Long id` | `DadosDetalhamentoUsuario` | Busca usuário por ID |
-| `atualizarUsuario` | `Long id, DadosAtualizacaoUsuario` | `DadosDetalhamentoUsuario` | Atualiza nome, e-mail ou senha |
-| `desativar` | `Long id` | `void` | Seta `ativo = false` |
-
----
-
-### `MateriaService`
-| Método | Parâmetros | Retorno | Descrição |
-|---|---|---|---|
-| `cadastrarMateria` | `DadosCadastroMateria, Long usuarioId` | `DadosDetalhamentoMateria` | Cria matéria (valida nome duplicado por usuário) |
-| `listarMateria` | `Long usuarioId` | `List<DadosListagemMateria>` | Lista matérias ativas do usuário |
-| `buscarPorID` | `Long id` | `DadosDetalhamentoMateria` | Busca matéria por ID |
-| `atualizarMateria` | `Long id, DadosAtualizacaoMateria` | `DadosDetalhamentoMateria` | Atualiza nome, descrição ou estado ativa |
-| `desativarMateria` | `Long id` | `void` | Seta `ativa = false` |
-| `buscarDono` | `Long id` | `Long` | Retorna `usuario.id` do dono (usado para verificar ownership) |
-
----
-
-### `TopicoService`
-| Método | Parâmetros | Retorno | Descrição |
-|---|---|---|---|
-| `cadastrarTopico` | `DadosCadastroTopico, Long usuarioId` | `DadosDetalhamentoTopico` | Cria tópico (valida duplicidade nome+matéria) |
-| `listarTopicos` | `Long materiaId, Long usuarioId` | `List<DadosListagemTopico>` | Lista por matéria ou todos do usuário |
-| `buscarPorId` | `Long id` | `DadosDetalhamentoTopico` | Busca tópico por ID |
-| `atualizar` | `Long id, DadosAtualizacaoTopico` | `DadosDetalhamentoTopico` | Atualiza nome, descrição, nível ou ativo |
-| `desativar` | `Long id` | `void` | Seta `ativo = false` |
-| `buscarDono` | `Long id` | `Long` | Retorna `usuario.id` do dono |
-
----
-
-### `QuestaoService`
-| Método | Parâmetros | Retorno | Descrição |
-|---|---|---|---|
-| `cadastrar` | `DadosCadastroQuestao` | `DadosDetalhamentoQuestao` | Cria questão vinculada ao tópico |
-| `listar` | `Pageable` | `Page<DadosListagemQuestao>` | Lista questões ativas paginadas |
-| `atualizar` | `Long id, DadosAtualizacaoQuestao` | `DadosDetalhamentoQuestao` | Atualiza enunciado, tipo ou ativa |
-| `inativar` | `Long id` | `void` | Seta `ativa = false` |
-
----
-
-### `ResultadoService`
-| Método | Parâmetros | Retorno | Descrição |
-|---|---|---|---|
-| `cadastrar` | `DadosCadastroResultado` | `DadosDetalhamentoResultado` | Registra resultado de uma resposta |
-| `listarPorUsuario` | `Long usuarioId, Pageable` | `Page<DadosListagemResultados>` | Resultados paginados do usuário |
-| `detalharResultado` | `Long id` | `DadosDetalhamentoResultado` | Detalha um resultado |
-
----
-
-### `ResultadoSessaoService`
-| Método | Parâmetros | Retorno | Descrição |
-|---|---|---|---|
-| `salvar` | `DadosCadastroResultadoSessao, Long usuarioId` | `DadosResultadoSessaoOutput` | Salva sessão calculando taxa de acerto |
-| `listarPorUsuario` | `Long usuarioId` | `List<DadosResultadoSessaoOutput>` | Histórico de sessões mais recentes primeiro |
-
----
-
-### `TarefaService`
-| Método | Parâmetros | Retorno | Descrição |
-|---|---|---|---|
-| `cadastrar` | `DadosCadastroTarefa` | `DadosDetalhamentoTarefa` | Cria tarefa (valida tarefa PENDENTE duplicada no tópico) |
-| `listarPorUsuario` | `Long usuarioId, TarefaStatus status` | `List<DadosListagemTarefa>` | Lista tarefas com filtro opcional por status |
-| `atualizarTarefa` | `Long id, DadosAtualizacaoTarefa` | `DadosDetalhamentoTarefa` | Atualiza (bloqueia CONCLUIDA/CANCELADA) |
-| `cancelar` | `Long id` | `void` | Cancela tarefa (bloqueia CONCLUIDA) |
-| `buscarDono` | `Long id` | `Long` | Retorna `usuario.id` da tarefa |
-
----
-
-### `PlanoEstudoService`
-| Método | Parâmetros | Retorno | Descrição |
-|---|---|---|---|
-| `buscarPorUsuario` | `Long usuarioId` | `DadosPlanoEstudo` | Retorna plano ativo do usuário |
-| `buscarHistoricoPorUsuario` | `Long usuarioId` | `List<DadosPlanoEstudo>` | Histórico de planos por versão ascendente |
-| `desativarPlanoEstudo` | `Long usuarioId` | `void` | Desativa plano atual (usado no ciclo de review) |
-
----
-
-### `OnboardingService`
-| Método | Parâmetros | Retorno | Descrição |
-|---|---|---|---|
-| `getStatus` | `Long usuarioId` | `DadosStatusOnboarding` | Retorna se onboarding está concluído |
-| `enviarMensagem` | `Long usuarioId, String mensagem` | `DadosRespostaChat` | Fluxo inicial (bloqueia se já concluído) |
-| `enviarMensagemReview` | `Long usuarioId, String mensagem` | `DadosRespostaChat` | Fluxo de revisão (exige onboarding já concluído) |
-| `processarMensagem` *(private)* | `Usuario, String, String systemPrompt` | `DadosRespostaChat` | Salva mensagem, chama IA, detecta conclusão |
-| `montarPromptComHistorico` *(private)* | `List<ChatMensagem>, String systemPrompt` | `String` | Monta prompt concatenando histórico |
-| `salvarPlanoEFinalizar` *(private)* | `Usuario, String respostaComJson` | `void` | Extrai JSON, salva PlanoEstudo, popula tarefas, marca onboarding concluído |
-
-**System Prompts internos:**
-- `SYSTEM_PROMPT_ONBOARDING` — coleta dados do aluno (vestibular, data da prova, matérias, níveis, horas/dia) e gera plano de 6 semanas com 3 tarefas por semana.
-- `SYSTEM_PROMPT_REVIEW` — revisão de progresso; gera novo plano (versão incrementada) com 3–5 tarefas por semana, sem repetir tópicos anteriores.
-
----
-
-### `RecommendationService`
-| Método | Parâmetros | Retorno | Descrição |
-|---|---|---|---|
-| `gerarRecomendacao` | `Long usuarioId` | `DadosRecomendacao` | Analisa desempenho e chama IA |
-| `montarPrompt` *(private)* | `DadosDesempenhoUsuario` | `String` | Monta prompt com dados de performance |
-| `parseResposta` *(private)* | `String respostaIA, DadosDesempenhoUsuario` | `DadosRecomendacao` | Parseia JSON da IA |
-
----
-
-### `PerformanceAnalyzerService`
-| Método | Parâmetros | Retorno | Descrição |
-|---|---|---|---|
-| `analisarDesempenho` | `Long usuarioId` | `DadosDesempenhoUsuario` | Agrega sessões por tópico, calcula taxa geral e lista os 5 tópicos mais fracos |
-
----
-
-### `AulaService`
-| Método | Parâmetros | Retorno | Descrição |
-|---|---|---|---|
-| `gerarConteudoAula` | `Long topicoId` | `DadosAulaOutput` | Gera aula via IA (busca tópico por ID) |
-| `gerarQuestoes` | `Long topicoId, int quantidade` | `DadosQuestoesOutput` | Gera questões ENEM via IA por ID do tópico |
-| `gerarConteudoPorNome` | `String topicoNome, String materiaNome, String nivel` | `DadosAulaOutput` | Gera aula via IA por nome (sem FK) |
-| `gerarQuestoesPorNome` | `String topicoNome, String materiaNome, int quantidade` | `DadosQuestoesOutput` | Gera questões via IA por nome |
-
----
-
-### `TarefaDescricaoService`
-| Método | Parâmetros | Retorno | Descrição |
-|---|---|---|---|
-| `gerarDescricao` | `Long tarefaId` | `DadosTarefaDescricao` | Gera descrição motivadora da tarefa via IA |
-
----
-
-### `EmailService`
-| Método | Parâmetros | Retorno | Descrição |
-|---|---|---|---|
-| `enviarEmailVerificacao` | `Usuario, String token` | `void` | Envia e-mail HTML com link de ativação (`@Async`) |
-
----
-
-### `TokenVerificacaoService`
-| Método | Parâmetros | Retorno | Descrição |
-|---|---|---|---|
-| `gerarEEnviarToken` | `Usuario` | `void` | Cria `TokenVerificacao` (UUID, validade 24h) e dispara e-mail |
-| `verificarToken` | `String tokenString` | `void` | Valida token (expirado? já usado?), ativa usuário |
-
----
-
-### `PlanoEstudoParser` (service/parser)
-| Método | Parâmetros | Retorno | Descrição |
-|---|---|---|---|
-| `parsearEPopular` | `Usuario, String conteudoJson` | `void` | Lê JSON do plano, cria/reutiliza matérias, tópicos e tarefas no banco |
-
----
-
-## 5. Controllers
-
-### `AuthController` — `/auth`
-| Método HTTP | Caminho | Request Body | Response | Descrição |
-|---|---|---|---|---|
-| `POST` | `/auth/login` | `DadosLogin` | `DadosTokenJwt` (200) | Autentica e retorna JWT |
-| `POST` | `/auth/registro` | `DadosCadastroUsuario` | `DadosDetalhamentoUsuario` (201) | Registra novo usuário |
-| `GET` | `/auth/verificar?token=` | `@RequestParam token` | `String` (200) | Ativa conta via token de e-mail |
-
----
-
-### `UsuarioController` — `/usuarios`
-| Método HTTP | Caminho | Autorização | Request | Response | Descrição |
-|---|---|---|---|---|---|
-| `GET` | `/usuarios` | ADMIN | — | `Page<DadosListagemUsuario>` (200) | Lista usuários ativos (paginado, default size=10 sort=nome) |
-| `GET` | `/usuarios/{id}` | ADMIN | — | `DadosDetalhamentoUsuario` (200) | Detalha usuário por ID |
-| `PUT` | `/usuarios/{id}` | ADMIN | `DadosAtualizacaoUsuario` | `DadosDetalhamentoUsuario` (200) | Atualiza usuário |
-| `DELETE` | `/usuarios/{id}` | ADMIN | — | `204 No Content` | Desativa usuário |
-
----
-
-### `MateriaController` — `/materias`
-| Método HTTP | Caminho | Request | Response | Descrição |
-|---|---|---|---|---|
-| `POST` | `/materias` | `DadosCadastroMateria` | `DadosDetalhamentoMateria` (201) | Cria matéria para usuário autenticado |
-| `GET` | `/materias` | — | `List<DadosListagemMateria>` (200) | Lista matérias do usuário |
-| `GET` | `/materias/{id}` | — | `DadosDetalhamentoMateria` (200) | Detalha matéria |
-| `PUT` | `/materias/{id}` | `DadosAtualizacaoMateria` | `DadosDetalhamentoMateria` (200) | Atualiza (verifica ownership) |
-| `DELETE` | `/materias/{id}` | — | `204 No Content` | Desativa (verifica ownership) |
-
----
-
-### `TopicoController` — `/topicos`
-| Método HTTP | Caminho | Request | Response | Descrição |
-|---|---|---|---|---|
-| `POST` | `/topicos` | `DadosCadastroTopico` | `DadosDetalhamentoTopico` (201) | Cria tópico |
-| `GET` | `/topicos?materiaID=` | — | `List<DadosListagemTopico>` (200) | Lista tópicos (opcional: filtrar por matéria) |
-| `GET` | `/topicos/{id}` | — | `DadosDetalhamentoTopico` (200) | Detalha tópico |
-| `PUT` | `/topicos/{id}` | `DadosAtualizacaoTopico` | `DadosDetalhamentoTopico` (200) | Atualiza (verifica ownership) |
-| `DELETE` | `/topicos/{id}` | — | `204 No Content` | Desativa (verifica ownership) |
-
----
-
-### `QuestaoController` — `/questoes`
-| Método HTTP | Caminho | Autorização | Request | Response | Descrição |
-|---|---|---|---|---|---|
-| `POST` | `/questoes` | ADMIN | `DadosCadastroQuestao` | `DadosDetalhamentoQuestao` (201) | Cria questão |
-| `GET` | `/questoes` | Autenticado | — | `Page<DadosListagemQuestao>` (200) | Lista questões ativas paginadas (default size=10) |
-| `PUT` | `/questoes/{id}` | ADMIN | `DadosAtualizacaoQuestao` | `DadosDetalhamentoQuestao` (200) | Atualiza questão |
-| `DELETE` | `/questoes/{id}` | ADMIN | — | `204 No Content` | Inativa questão |
-
----
-
-### `ResultadoController` — `/resultados`
-| Método HTTP | Caminho | Request | Response | Descrição |
-|---|---|---|---|---|
-| `POST` | `/resultados` | `DadosCadastroResultado` | `DadosDetalhamentoResultado` (201) | Registra resultado de resposta |
-| `GET` | `/resultados/usuario/{usuarioId}` | — | `Page<DadosListagemResultados>` (200) | Lista resultados paginados (ownership check) |
-| `GET` | `/resultados/{id}` | — | `DadosDetalhamentoResultado` (200) | Detalha resultado (ownership check) |
-
----
-
-### `ResultadoSessaoController` — `/resultado-sessao`
-| Método HTTP | Caminho | Request | Response | Descrição |
-|---|---|---|---|---|
-| `POST` | `/resultado-sessao` | `DadosCadastroResultadoSessao` | `DadosResultadoSessaoOutput` (201) | Salva resultado de sessão |
-| `GET` | `/resultado-sessao/usuario/{usuarioId}` | — | `List<DadosResultadoSessaoOutput>` (200) | Lista sessões (ownership check) |
-
----
-
-### `TarefaController` — `/tarefas`
-| Método HTTP | Caminho | Request | Response | Descrição |
-|---|---|---|---|---|
-| `POST` | `/tarefas` | `DadosCadastroTarefa` | `DadosDetalhamentoTarefa` (201) | Cria tarefa |
-| `GET` | `/tarefas/usuario/{usuarioId}?status=` | — | `List<DadosListagemTarefa>` (200) | Lista tarefas (ownership check, status opcional) |
-| `PUT` | `/tarefas/{id}` | `DadosAtualizacaoTarefa` | `DadosDetalhamentoTarefa` (200) | Atualiza (ownership check) |
-| `DELETE` | `/tarefas/{id}` | — | `204 No Content` | Cancela tarefa (ownership check) |
-
----
-
-### `OnboardingController` — `/onboarding`
-| Método HTTP | Caminho | Request | Response | Descrição |
-|---|---|---|---|---|
-| `GET` | `/onboarding/status/{usuarioId}` | — | `DadosStatusOnboarding` (200) | Status do onboarding (ownership check) |
-| `POST` | `/onboarding/mensagem/{usuarioId}` | `DadosMensagemChat` | `DadosRespostaChat` (200) | Chat onboarding inicial (ownership check) |
-| `POST` | `/onboarding/review/{usuarioId}` | `DadosMensagemChat` | `DadosRespostaChat` (200) | Chat de revisão do plano (ownership check) |
-
----
-
-### `PlanoEstudoController` — `/plano-estudo/usuario/{usuarioId}`
-| Método HTTP | Caminho | Response | Descrição |
-|---|---|---|---|
-| `GET` | `/plano-estudo/usuario/{usuarioId}` | `DadosPlanoEstudo` (200) | Plano ativo (ownership check) |
-| `GET` | `/plano-estudo/usuario/{usuarioId}/historico` | `List<DadosPlanoEstudo>` (200) | Histórico de versões (ownership check) |
-
----
-
-### `AulaController` — `/aula`
-| Método HTTP | Caminho | Params | Response | Descrição |
-|---|---|---|---|---|
-| `GET` | `/aula/topico/{topicoId}/conteudo` | — | `DadosAulaOutput` (200) | Conteúdo de aula por ID do tópico |
-| `GET` | `/aula/topico/{topicoId}/questoes?quantidade=` | `quantidade` (default 5) | `DadosQuestoesOutput` (200) | Questões por ID do tópico |
-| `GET` | `/aula/topico/por-nome/conteudo?topicoNome=&materiaNome=&nivel=` | Query params | `DadosAulaOutput` (200) | Conteúdo de aula por nome |
-| `GET` | `/aula/topico/por-nome/questoes?topicoNome=&materiaNome=&quantidade=` | Query params | `DadosQuestoesOutput` (200) | Questões por nome |
-| `GET` | `/aula/tarefa/{tarefaId}/descricao` | — | `DadosTarefaDescricao` (200) | Descrição motivadora de tarefa |
-
----
-
-### `DiagnosticoController` — `/diagnostico`
-| Método HTTP | Caminho | Response | Descrição |
-|---|---|---|---|
-| `GET` | `/diagnostico/usuario/{usuarioId}` | `List<DadosDesempenhoTopico>` (200) | Desempenho por tópico (ownership check) |
-
----
-
-### `RecomendacaoController` — `/recomendacao`
-| Método HTTP | Caminho | Response | Descrição |
-|---|---|---|---|
-| `GET` | `/recomendacao/usuario/{usuarioId}` | `DadosRecomendacao` (200) | Recomendações personalizadas via IA (ownership check) |
-
----
-
-### `DashboardController` — `/dashboard`
-| Método HTTP | Caminho | Response | Descrição |
-|---|---|---|---|
-| `GET` | `/dashboard/usuario/{usuarioId}` | `DadosDesempenhoUsuario` (200) | Dados consolidados de desempenho (ownership check) |
-
----
-
-## 6. DTOs
-
-### DTOs de Entrada (Input)
-
-| Classe | Campos | Validações |
-|---|---|---|
-| `DadosLogin` | `email: String`, `senha: String` | `@NotBlank` em ambos |
-| `DadosCadastroUsuario` | `nome: String`, `email: String`, `senha: String` | `@NotBlank`, `@Email`, `@Size(min=8)` |
-| `DadosAtualizacaoUsuario` | `nome: String`, `email: String`, `senha: String` | `@Email`, `@Size(min=8)` |
-| `DadosCadastroMateria` | `nome: String`, `descricao: String` | `@NotBlank(nome)` |
-| `DadosAtualizacaoMateria` | `nome: String`, `descricao: String`, `ativa: Boolean` | `@NotBlank(nome)` |
-| `DadosCadastroTopico` | `nome: String`, `descricao: String`, `materiaId: Long`, `nivelDificuldade: NivelDificuldade` | `@NotBlank(nome)`, `@NotNull(materiaId, nivelDificuldade)` |
-| `DadosAtualizacaoTopico` | `nome: String`, `descricao: String`, `nivelDificuldade: NivelDificuldade`, `ativo: Boolean` | nenhuma obrigatória |
-| `DadosCadastroQuestao` | `enunciado: String`, `tipo: TipoQuestao`, `topicoId: Long` | `@NotBlank(enunciado)`, `@NotNull(tipo, topicoId)` |
-| `DadosAtualizacaoQuestao` | `enunciado: String`, `tipo: TipoQuestao`, `ativa: Boolean` | nenhuma obrigatória |
-| `DadosCadastroResultado` | `usuarioId: Long`, `questaoId: Long`, `status: RespostaStatus`, `respostaUsuario: String` | `@NotNull(usuarioId, questaoId, status)` |
-| `DadosCadastroResultadoSessao` | `topicoNome: String`, `materiaNome: String`, `totalQuestoes: Integer`, `acertos: Integer` | `@NotBlank(nomes)`, `@NotNull(números)` |
-| `DadosCadastroTarefa` | `usuarioId: Long`, `topicoId: Long`, `tipo: TipoTarefa`, `descricao: String`, `meta: Integer`, `prazo: LocalDate` | `@NotNull(usuarioId, tipo, meta)`, `@NotBlank(descricao)`, `@Positive(meta)` |
-| `DadosAtualizacaoTarefa` | `descricao: String`, `meta: Integer`, `prazo: LocalDate`, `status: TarefaStatus` | `@Positive(meta)` |
-| `DadosMensagemChat` | `mensagem: String` | `@NotNull` |
-
----
-
-### DTOs de Saída (Output)
-
-| Classe | Campos |
-|---|---|
-| `DadosTokenJwt` | `token: String` |
-| `DadosErro` | `status: int`, `mensagem: String` |
-| `DadosDetalhamentoUsuario` | `id, nome, email, role, ativo, criadoEm` |
-| `DadosListagemUsuario` | `id, nome, email, role, ativo` |
-| `DadosDetalhamentoMateria` | `id, nome, descricao, ativa` |
-| `DadosListagemMateria` | `id, nome, ativa` |
-| `DadosDetalhamentoTopico` | `id, nome, descricao, nivel, materiaId, materiaNome, ativo` |
-| `DadosListagemTopico` | `id, nome, nivel, materia (nome), ativo` |
-| `DadosDetalhamentoQuestao` | `id, enunciado, tipo, topicoId, topicoNome, ativa` |
-| `DadosListagemQuestao` | `id, enunciado, tipo, topicoNome, ativa` |
-| `DadosDetalhamentoResultado` | `id, usuarioId, questaoId, questaoEnunciado, status, respostaUsuario, respondidoEm` |
-| `DadosListagemResultados` | `id, questaoId, status, respondidoEm` |
-| `DadosResultadoSessaoOutput` | `id, topicoNome, materiaNome, totalQuestoes, acertos, taxaAcerto, respondidoEm` |
-| `DadosDetalhamentoTarefa` | `id, usuarioId, usuarioNome, topicoId, topicoNome, tipo, descricao, meta, prazo, status, criadaEm` |
-| `DadosListagemTarefa` | `id, usuarioId, usuarioNome, topicoId, topicoNome, tipo, descricao, meta, prazo, status` |
-| `DadosPlanoEstudo` | `id, usuarioId, conteudoJson, versao, criadoEm` |
-| `DadosRespostaChat` | `resposta: String`, `onboardingConcluido: boolean` |
-| `DadosStatusOnboarding` | `usuarioId: Long`, `onboardingConcluido: boolean` |
-| `DadosDesempenhoTopico` | `topicoId, topicoNome, materiaNome, totalRespostas, totalAcertos, taxaAcerto` |
-| `DadosDesempenhoUsuario` | `usuarioId, totalRespostas, totalAcertos, taxaAcertoGeral, desempenhoPorTopico (List), topicosMaisFracos (List)` |
-| `DadosRecomendacao` | `usuarioId, diagnostico, topicosPrioritarios (List), dicasPraticas (List), mensagemMotivacional, taxaAcertoGeral` |
-| `DadosAulaOutput` | `titulo, materia, nivelDificuldade, conteudo, recomendacoes (List<String>)` |
-| `DadosQuestoesOutput` | `topico, total, questoes (List<DadosQuestaoGerada>)` |
-| `DadosQuestaoGerada` | `numero, enunciado, alternativas (List<String>), alternativaCorreta (int índice 0-based), explicacao` |
-| `DadosTarefaDescricao` | `titulo, descricaoDetalhada, passos (List<String>)` |
-
----
-
-## 7. Segurança
-
-### Configuração (`SecurityConfig`)
-
-- **Sessão:** `STATELESS` — sem criação de sessão HTTP.
-- **CSRF:** desabilitado.
-- **CORS:** configurável via `cors.allowed-origins` (env var); padrão `localhost:5500`, `127.0.0.1:5500`, `localhost:3000`. Métodos permitidos: GET, POST, PUT, DELETE, OPTIONS. Credentials: true.
-- **Criptografia de senha:** `BCryptPasswordEncoder`.
-
-### Rotas Públicas (sem autenticação)
-| Rota | Motivo |
-|---|---|
-| `POST /auth/login` | Login |
-| `POST /auth/registro` | Registro |
-| `GET /auth/verificar` | Verificação de e-mail |
-| `/v3/api-docs/**` | Swagger docs |
-| `/swagger-ui/**` | Swagger UI |
-
-### Rotas Exclusivas de ADMIN
-| Rota |
-|---|
-| `GET /usuarios` |
-| `GET /usuarios/{id}` |
-| `PUT /usuarios/{id}` |
-| `DELETE /usuarios/{id}` |
-| `POST /questoes` |
-| `PUT /questoes/{id}` |
-| `DELETE /questoes/{id}` |
-
-### Demais rotas
-Qualquer usuário autenticado (`.anyRequest().authenticated()`), com controle de **ownership** aplicado no nível da lógica de negócio (veja `SecurityUtils`).
-
----
-
-### Fluxo JWT
+**Pacotes principais:**
+- `com.eduardo.studymind.controller` — 12 controllers REST
+- `com.eduardo.studymind.service` — 13 services + 1 parser
+- `com.eduardo.studymind.domain` — Entidades JPA e repositórios
+- `com.eduardo.studymind.dto` — Records de entrada/saída (separados em `/input` e `/output`)
+- `com.eduardo.studymind.infra.security` — JWT, filtro de autenticação, config do Spring Security
+- `com.eduardo.studymind.infra.ia` — Interface `AIClient` e implementação `AnthropicClient`
+- `com.eduardo.studymind.exception` — Handler global e exceções de domínio
+
+**Entidades do modelo de domínio:**
 
 ```
-1. Cliente POST /auth/login  →  AuthController
-2. AuthController autentica via AuthenticationManager (Spring Security)
-3. JwtService.gerarToken(usuario)
-   - Algoritmo: HMAC256 com secret lido de ${api.security.token.secret}
-   - Issuer: "studymind-api"
-   - Subject: email do usuário
-   - Claims: role (ex: "ALUNO"), id (Long)
-   - Expiração: 2 horas
-4. Token JWT retornado ao cliente como {"token": "..."}
-
-5. Requisições subsequentes:
-   Header: Authorization: Bearer <token>
-6. AuthFilter (OncePerRequestFilter)
-   - Extrai o token do header
-   - JwtService.validarToken(token) → retorna email ou null
-   - UserDetailsServiceImpl.loadUserByUsername(email) → carrega Usuario do banco
-   - Popula SecurityContextHolder com UsernamePasswordAuthenticationToken
-
-7. SecurityUtils.getUsuarioAuthenticado(authentication) → retorna Usuario autenticado
-8. SecurityUtils.verificarOwnership(ownerId, authentication)
-   - Admin: acesso irrestrito
-   - Usuário comum: só acessa próprios dados; lança HTTP 403 se IDs divergem
+Usuario → Materia → Topico → Questao → Resultado
+Usuario → Tarefa (vinculada a Topico)
+Usuario → PlanoEstudo (JSON gerado por IA)
+Usuario → ChatMensagem (histórico do onboarding)
+Usuario → ResultadoSessao (agregado por sessão de estudo)
+Usuario → TokenVerificacao (verificação de e-mail)
 ```
 
-### Verificação de E-mail
-```
-1. POST /auth/registro → cria usuário com ativo=false
-2. TokenVerificacaoService.gerarEEnviarToken()
-   - Cria TokenVerificacao (UUID, expira em 24h, utilizado=false)
-   - EmailService.enviarEmailVerificacao(@Async) → e-mail HTML via JavaMail/Gmail SMTP
-3. Usuário clica no link: GET /auth/verificar?token=<uuid>
-4. TokenVerificacaoService.verificarToken()
-   - Valida: existe, não expirado, não utilizado
-   - Seta usuario.ativo=true e token.utilizado=true
-```
+**Migrações Flyway (V1–V15):** criação de tabelas, índices, adição de colunas (`onboarding_concluido`, `usuario_id` em matérias/tópicos), tabelas de sessão, plano de estudo, chat e tokens de verificação.
 
 ---
 
-## 8. Camada de IA
+## 2. Defeitos e Bugs Identificados
 
-### `AIClient` (interface)
-```java
-public interface AIClient {
-    String gerarResposta(String prompt);
-}
-```
-Interface simples para desacoplar a implementação da IA do restante da aplicação.
+### BUG-01 — NullPointerException garantido em `DadosListagemTarefa`
+
+- **Arquivo:** `src/main/java/com/eduardo/studymind/dto/output/tarefa/DadosListagemTarefa.java` — linhas 28–29
+- **Descrição:** O construtor chama `tarefa.getTopico().getId()` e `tarefa.getTopico().getNome()` diretamente, sem verificação de nulo. O campo `topico_id` é `nullable` na tabela `tarefas` (confirmado na migration V6). Qualquer tarefa sem tópico vinculado lança `NullPointerException` ao ser listada. A classe irmã `DadosDetalhamentoTarefa` (linhas 29–30) já faz a checagem correta com operador ternário, evidenciando que o problema foi resolvido em um lugar mas esquecido no outro.
+- **Impacto:** **Alto** — quebra o endpoint `GET /tarefas` para usuários com tarefas sem tópico.
 
 ---
 
-### `AnthropicClient` (implementação)
+### BUG-02 — Stack trace exposto em produção no handler genérico
 
-- **Modelo:** `claude-haiku-4-5-20251001`
-- **Endpoint:** `POST https://api.anthropic.com/v1/messages`
-- **Headers:** `x-api-key`, `anthropic-version: 2023-06-01`, `content-type: application/json`
-- **max_tokens:** 4096
-- **HTTP Client:** `RestClient` com `JdkClientHttpRequestFactory`, timeout de conexão de 10s
-- **API Key:** lida de `${anthropic.api.key}` (variável de ambiente)
-- **Inicialização:** `@PostConstruct init()` — cria o `RestClient`
-
-**Estrutura da requisição:**
-```json
-{
-  "model": "claude-haiku-4-5-20251001",
-  "max_tokens": 4096,
-  "messages": [{ "role": "user", "content": "<prompt montado pela aplicação>" }]
-}
-```
-
-**Retorno:** extrai `content[0].text` da resposta da API.
+- **Arquivo:** `src/main/java/com/eduardo/studymind/exception/GlobalExceptionHandler.java` — linha 39
+- **Descrição:** O handler `handleErroGenerico(Exception ex)` chama `ex.printStackTrace()`, que imprime o stack trace completo no `stderr` do servidor. Em ambientes com logs agregados (CloudWatch, Datadog, Grafana Loki), isso pode vazar nomes de classes internas, estrutura de pacotes e detalhes de implementação para logs potencialmente acessíveis. O correto seria substituir por `log.error("Erro inesperado", ex)` usando SLF4J.
+- **Impacto:** **Médio** — vazamento de informações internas; violação de boas práticas de segurança (OWASP A05: Security Misconfiguration).
 
 ---
 
-### `RecommendationService` — Prompt de Recomendação
+### BUG-03 — `enviadorEmail.send()` fora do bloco try-catch em `EmailService`
 
-Contexto enviado à IA:
-```
-- Total de questões respondidas pelo aluno
-- Taxa de acerto geral (%)
-- Top 5 tópicos com menor taxa de acerto (nome, matéria, %)
-```
-
-Resposta esperada (JSON):
-```json
-{
-  "diagnostico": "...",
-  "topicosPrioritarios": ["topico1", "topico2", "topico3"],
-  "dicasPraticas": ["dica1", "dica2"],
-  "mensagemMotivacional": "..."
-}
-```
+- **Arquivo:** `src/main/java/com/eduardo/studymind/service/EmailService.java` — linhas 36–49
+- **Descrição:** O método `enviarEmail()` constrói a mensagem dentro de um `try-catch` que captura `MessagingException` e `UnsupportedEncodingException`, mas a chamada `enviadorEmail.send(message)` está na **linha 49, fora do bloco try**. `JavaMailSender.send()` lança `MailException` (que é `RuntimeException`), que não é capturada. Como o método é invocado de dentro de um contexto `@Async`, essa exceção é engolida silenciosamente — o usuário nunca recebe o email de verificação e nenhum erro é registrado.
+- **Impacto:** **Alto** — emails de verificação podem falhar silenciosamente; o usuário não consegue ativar a conta e não recebe feedback de erro.
 
 ---
 
-### `AulaService` — Prompts de Aula e Questões
+### BUG-04 — `AnthropicClient` sem timeout de leitura (read timeout)
 
-**Prompt de Aula:**  
-Recebe: nome do tópico, matéria e nível.  
-Resposta esperada (JSON):
-```json
-{
-  "titulo": "...",
-  "materia": "...",
-  "nivelDificuldade": "...",
-  "conteudo": "...mínimo 300 palavras...",
-  "recomendacoes": ["rec1", "rec2", "rec3"]
-}
-```
-
-**Prompt de Questões:**  
-Recebe: nome do tópico, matéria, nível e quantidade.  
-Resposta esperada (JSON):
-```json
-{
-  "topico": "...",
-  "total": 5,
-  "questoes": [{
-    "numero": 1,
-    "enunciado": "...",
-    "alternativas": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."],
-    "alternativaCorreta": 0,
-    "explicacao": "..."
-  }]
-}
-```
-Regra obrigatória: questões devem ser autocontidas (proibido referenciar gráficos, figuras ou tabelas externas).
+- **Arquivo:** `src/main/java/com/eduardo/studymind/infra/ia/AnthropicClient.java` — linhas 28–35
+- **Descrição:** O `HttpClient` configurado em `@PostConstruct` define apenas `connectTimeout(Duration.ofSeconds(10))`. Não existe `readTimeout` ou `requestTimeout`. Chamadas à API da Anthropic para geração de aulas, onboarding e recomendações podem demorar 15–60 segundos. Sem read timeout, as threads do pool de request do Spring ficam bloqueadas indefinidamente aguardando resposta, podendo causar esgotamento do thread pool (thread starvation) sob carga moderada e indisponibilidade total da aplicação.
+- **Impacto:** **Alto** — risco de indisponibilidade total sob carga; impossível de diagnosticar sem logs estruturados.
 
 ---
 
-### `TarefaDescricaoService` — Prompt de Descrição de Tarefa
+### BUG-05 — `PerformanceAnalyzerService` faz lookup de tópico sem filtrar por usuário
 
-Recebe: descrição, tipo, meta, nome do tópico e matéria.  
-Resposta esperada (JSON):
-```json
-{
-  "titulo": "...",
-  "descricaoDetalhada": "...2-3 frases...",
-  "passos": ["passo1", "passo2", "passo3"]
-}
-```
-Máximo 4 passos.
+- **Arquivo:** `src/main/java/com/eduardo/studymind/service/PerformanceAnalyzerService.java` — linhas 49–52
+- **Descrição:** Para resolver o `topicoId`, o serviço chama `topicoRepository.findByNomeAndMateriaNome(topicoNome, materiaNome)`. Essa query não filtra por `usuario_id`. Se dois usuários diferentes tiverem tópicos com o mesmo nome e matéria (ex: "Funções" em "Matemática"), a query pode retornar o tópico de outro usuário. Ironicamente, o `topicoId` resolvido nunca é utilizado — o construtor de `DadosDesempenhoTopico` recebe `null` explicitamente (linha 54: `null, // ResultadoSessao não tem topicoId`), tornando o lookup inútil além de incorreto.
+- **Impacto:** **Médio** — vazamento potencial de dados de outros usuários; funcionalidade de diagnóstico por tópico comprometida.
 
 ---
 
-### `OnboardingService` — Prompts de Onboarding
+### BUG-06 — Histórico de chat deletado antes da validação completa do plano
 
-O sistema instrui o modelo a conduzir uma conversa natural fazendo UMA pergunta por vez e, ao final, emitir o token `ONBOARDING_COMPLETO` seguido de um JSON estruturado com o plano de estudos.
-
-**JSON do plano:**
-```json
-{
-  "vestibular": "FUVEST",
-  "dataExame": "2026-11-15",
-  "horasPorDia": 3,
-  "versao": 1,
-  "materias": [{
-    "nome": "Matemática",
-    "descricao": "...",
-    "topicos": [{"nome": "Funções", "nivel": "MEDIO", "descricao": "..."}]
-  }],
-  "semanas": [{
-    "numero": 1,
-    "tarefas": [{"topicoNome": "...", "materiaNome": "...", "tipo": "REVISAO", "descricao": "...", "meta": 10}]
-  }]
-}
-```
-
-- Onboarding inicial: 6 semanas, exatamente 3 tarefas por semana, máximo 5 matérias.
-- Onboarding review: 6 semanas, 3–5 tarefas por semana, versão incrementada, sem repetir tópicos.
-
-**Tratamento da resposta:**
-1. Detecta `ONBOARDING_COMPLETO` na resposta.
-2. Extrai o JSON entre `{` e `}`.
-3. Valida com `ObjectMapper.readTree()`.
-4. Desativa plano anterior (se existir).
-5. Limpa histórico de chat (`deleteAllByUsuarioId`).
-6. Salva novo `PlanoEstudo`.
-7. Chama `PlanoEstudoParser.parsearEPopular()` — cria matérias, tópicos e tarefas no banco.
-8. Marca `usuario.onboardingConcluido = true`.
+- **Arquivo:** `src/main/java/com/eduardo/studymind/service/OnboardingService.java` — linhas 190 e 207
+- **Descrição:** Em `salvarPlanoEFinalizar()`, o histórico de chat é apagado via `chatMensagemRepository.deleteAllByUsuarioId()` (linha 190) antes de `planoEstudoParser.parsearEPopular()` ser chamado (linha 207). Se o parser falhar, o `@Transactional` fará rollback de todas as operações JPA, incluindo o delete do histórico. Porém, se a falha ocorrer **fora** do contexto transacional (ex: erro de rede antes de chegar ao parser), o histórico pode ser perdido sem que o plano tenha sido salvo. Semanticamente, apagar o histórico deveria ser a última operação após confirmação de sucesso.
+- **Impacto:** **Médio** — perda de contexto de conversação em cenários de falha parcial.
 
 ---
 
-### Tratamento de Erros de IA
-A exception `ErroIntegracaoIAException` é lançada em qualquer falha de parsing JSON ou chamada HTTP. O `GlobalExceptionHandler` mapeia para HTTP 502 Bad Gateway.
+### BUG-07 — Inconsistência de regras entre os dois system prompts de onboarding
+
+- **Arquivo:** `src/main/java/com/eduardo/studymind/service/OnboardingService.java` — linha 55 vs linha 84
+- **Descrição:** `SYSTEM_PROMPT_ONBOARDING` instrui a IA: "Cada semana deve ter **exatamente 3 tarefas**, nem mais nem menos". `SYSTEM_PROMPT_REVIEW` instrui: "Cada semana deve ter **no mínimo 3 tarefas e no máximo 5 tarefas**". O `PlanoEstudoParser` não valida a quantidade de tarefas geradas — persiste tudo que vem no JSON. Isso cria inconsistência no volume de tarefas entre planos iniciais e planos de revisão.
+- **Impacto:** **Baixo** — inconsistência de dados entre ciclos; sem falha crítica, mas dificulta análise de performance ao longo do tempo.
 
 ---
 
-## 9. Migrações Flyway
+### BUG-08 — `ObjectMapper` instanciado a cada chamada em `AulaService`
 
-| Versão | Arquivo | Descrição |
-|---|---|---|
-| V1 | `V1__create-table-usuarios.sql` | Cria tabela `usuarios` com id, nome, email (UNIQUE), senha, role, ativo, criado_em |
-| V2 | `V2__create-table-materias.sql` | Cria tabela `materias` com id, nome, descricao, ativa |
-| V3 | `V3__crate-table-topicos.sql` | Cria tabela `topicos` com id, nome, descricao, materia_id (FK), nivel, ativo |
-| V4 | `V4__crate-table-questoes.sql` | Cria tabela `questoes` com id, enunciado, tipo, topico_id (FK), ativa |
-| V5 | `V5__create-table-resultados.sql` | Cria tabela `resultados` com id, usuario_id (FK), questao_id (FK), status, resposta_usuario, respondido_em |
-| V6 | `V6__crate-table-tarefas.sql` | Cria tabela `tarefas` com id, usuario_id (FK), topico_id (FK, nullable), tipo, descricao, meta, prazo, status (default PENDENTE), criada_em |
-| V7 | `V7__create-indexes.sql` | Cria índices em: `usuarios.email`, `topicos.materia_id`, `questoes.topico_id`, `resultados.usuario_id`, `resultados.questao_id`, `tarefas.usuario_id`, `tarefas.topico_id`, `tarefas.status` |
-| V8 | `V8__add-onboarding-usuarios.sql` | Adiciona coluna `onboarding_concluido BOOLEAN NOT NULL DEFAULT FALSE` em `usuarios` |
-| V9 | `V9__crate-table-chat-mensagens.sql` | Cria tabela `chat_mensagens` com id, usuario_id (FK), role, conteudo (TEXT), criado_em; cria índice em usuario_id |
-| V10 | `V10__create-table-plano-estudo.sql` | Cria tabela `plano_estudo` com id, usuario_id (FK, UNIQUE), conteudo_json (TEXT), criado_em; cria índice em usuario_id |
-| V11 | `V11__alter-table-plano-estudo.sql` | Remove constraint UNIQUE de usuario_id; adiciona colunas `versao INTEGER NOT NULL DEFAULT 1` e `ativo BOOLEAN NOT NULL DEFAULT TRUE`; cria índice composto `(usuario_id, ativo)` |
-| V12 | `V12__ad-usuario-id-materias-topicos.sql` | Adiciona `usuario_id` (FK para usuarios) em `materias` e `topicos`; remove unique constraint de `materias.nome`; cria índices em ambas as tabelas |
-| V13 | `V13__create-resultado-sessao.sql` | Cria tabela `resultado_sessoes` com id, usuario_id (FK), topico_nome, materia_nome, total_questoes, acertos, taxa_acerto (DECIMAL 5,2), respondido_em |
-| V14 | `V14__fix-taxa-acerto-tipo.sql` | Altera tipo de `taxa_acerto` de DECIMAL para `FLOAT8` |
-| V15 | `V15__create-table-token-verificacao.sql` | Cria tabela `tokens_verificacao` com id, token (VARCHAR UNIQUE), usuario_id (FK), expiracao, utilizado (default FALSE) |
+- **Arquivo:** `src/main/java/com/eduardo/studymind/service/AulaService.java` — linhas 177 e 200
+- **Descrição:** Os métodos privados `parseAulaJson()` e `parseQuestoesJson()` criam `new ObjectMapper()` a cada invocação. `ObjectMapper` é thread-safe e caro para instanciar (envolve carregamento de módulos e configuração interna). O projeto já expõe `ObjectMapper` como `@Bean` e o injeta em outros services (ex: `OnboardingService`), mas `AulaService` não o recebe por injeção.
+- **Impacto:** **Baixo** — desperdício de memória e CPU a cada geração de aula ou questão; pode agravar sob carga.
 
 ---
 
-## 10. Dependências (`pom.xml`)
+## 3. Pontos de Melhoria Técnica
 
-| Dependência | Grupo / Artefato | Versão | Escopo | Descrição |
-|---|---|---|---|---|
-| Spring Boot Parent | `org.springframework.boot:spring-boot-starter-parent` | 3.5.14 | — | BOM principal |
-| spring-boot-starter-web | Spring Boot | gerenciada | compile | REST API, Tomcat embutido |
-| spring-boot-starter-data-jpa | Spring Boot | gerenciada | compile | JPA/Hibernate + Spring Data |
-| spring-boot-starter-mail | Spring Boot | gerenciada | compile | JavaMail para envio de e-mails |
-| spring-boot-starter-validation | Spring Boot | gerenciada | compile | Bean Validation (Jakarta) |
-| spring-boot-starter-security | Spring Boot | gerenciada | compile | Spring Security |
-| postgresql | `org.postgresql:postgresql` | gerenciada | runtime | Driver JDBC para PostgreSQL |
-| flyway-core | `org.flywaydb:flyway-core` | gerenciada | compile | Migrações de banco de dados |
-| flyway-database-postgresql | `org.flywaydb:flyway-database-postgresql` | gerenciada | compile | Suporte Flyway a PostgreSQL |
-| lombok | `org.projectlombok:lombok` | gerenciada | optional | Geração de código boilerplate |
-| spring-boot-starter-test | Spring Boot | gerenciada | test | JUnit 5, Mockito, AssertJ |
-| spring-security-test | `org.springframework.security:spring-security-test` | gerenciada | test | Suporte a testes de segurança |
-| java-jwt | `com.auth0:java-jwt` | **4.4.0** | compile | Geração e validação de tokens JWT (HMAC256) |
-| springdoc-openapi-starter-webmvc-ui | `org.springdoc:springdoc-openapi-starter-webmvc-ui` | **2.8.8** | compile | Swagger UI e OpenAPI 3 |
+### MEL-01 — Entidade `ResultadoSessao` desnormalizada (sem chaves estrangeiras para tópico/matéria)
 
-**Java:** 17  
-**Build Plugin:** `spring-boot-maven-plugin` (exclui Lombok do JAR final)
+- **Arquivo:** `src/main/java/com/eduardo/studymind/domain/resultado/ResultadoSessao.java` — linhas 27–31
+- **Descrição:** Os campos `topicoNome` (`VARCHAR(150)`) e `materiaNome` (`VARCHAR(100)`) armazenam strings literais em vez de referências `@ManyToOne` para `Topico` e `Materia`. Se o usuário renomear um tópico (via `PUT /topicos/{id}`), todos os `ResultadoSessao` históricos ficam associados ao nome antigo. O `PerformanceAnalyzerService` agrupa por chave composta `topicoNome + "|" + materiaNome`, tornando toda a análise de performance frágil a mudanças de nome.
+- **Impacto:** **Alto** — integridade referencial comprometida; análises de desempenho ficam inconsistentes após renomeações.
+
+---
+
+### MEL-02 — Ausência de rate limiting em endpoints críticos
+
+- **Arquivo:** `src/main/java/com/eduardo/studymind/infra/security/SecurityConfig.java`
+- **Descrição:** Não há nenhum mecanismo de limitação de taxa. Endpoints vulneráveis: `/auth/login` (força bruta de senhas), `/auth/registro` (cadastros em massa/bots), `/auth/verificar` (enumeração de tokens), `/onboarding/mensagem` e `/aula/**` (abuso da API paga Anthropic). Um atacante pode esgotar todo o crédito da API da Anthropic com poucas requisições automatizadas.
+- **Impacto:** **Alto** — risco financeiro direto (API paga por token) e risco de segurança (OWASP A04: Insecure Design).
+
+---
+
+### MEL-03 — Ausência de token de refresh JWT
+
+- **Arquivo:** `src/main/java/com/eduardo/studymind/infra/security/JwtService.java` — linha 19
+- **Descrição:** `EXPIRATION_TIME = 2 * 60 * 60 * 1000` (2 horas). Não há endpoint de refresh. Após 2 horas o usuário é deslogado e precisa autenticar novamente. Para uma aplicação de estudos que fica aberta o dia todo (sessões longas de estudo), isso representa uma fricção significativa na experiência do usuário.
+- **Impacto:** **Médio** — UX degradada; pode levar a abandono da sessão de estudos.
+
+---
+
+### MEL-04 — Histórico de chat carregado integralmente em memória
+
+- **Arquivo:** `src/main/java/com/eduardo/studymind/service/OnboardingService.java` — linha 132
+- **Descrição:** `chatMensagemRepository.findAllByUsuarioIdOrderByCriadoEmAsc(usuario.getId())` carrega **todo** o histórico de uma vez e o concatena como texto plano no prompt enviado à IA. Conversas longas (onboardings com muitos ciclos de review) acumulam dezenas de mensagens. O custo por chamada cresce linearmente com o número de mensagens, e há risco de ultrapassar o limite de contexto do modelo Claude Haiku (200k tokens).
+- **Impacto:** **Médio** — custo crescente com a IA; possível falha ao exceder o limite de tokens do modelo.
+
+---
+
+### MEL-05 — Ausência de cache para geração de aulas e questões
+
+- **Arquivo:** `src/main/java/com/eduardo/studymind/service/AulaService.java`
+- **Descrição:** Cada chamada a `gerarConteudoAula(topicoId)` ou `gerarQuestoes(topicoId, quantidade)` faz uma requisição completa à API da Anthropic. O conteúdo de uma aula sobre "Funções Quadráticas" nível MEDIO é praticamente o mesmo para qualquer usuário em qualquer momento. Poderia ser cacheado com `@Cacheable` do Spring (usando Redis ou Caffeine) por `(topicoId, tipo)`.
+- **Impacto:** **Médio** — custo desnecessário de API e latência alta (10–30 segundos por chamada) para conteúdo que poderia ser servido em milissegundos.
+
+---
+
+### MEL-06 — Ausência de paginação em listagens de tópicos, questões e resultados
+
+- **Arquivo:** `src/main/java/com/eduardo/studymind/service/TopicoService.java`, `QuestaoService.java`, `ResultadoService.java`
+- **Descrição:** Os métodos `listarPorMateria()`, `listarPorTopico()` e `listarPorUsuario()` retornam `List<>` completas sem paginação. Apenas `UsuarioService.listar()` usa `Pageable`. Em um cenário de uso real com centenas de questões por tópico ou dezenas de resultados, essas listagens se tornam ineficientes.
+- **Impacto:** **Médio** — degradação de performance e uso de memória à medida que o volume de dados cresce.
+
+---
+
+### MEL-07 — Ausência de logs estruturados em toda a camada de serviço
+
+- **Arquivo:** Todos os services em `com.eduardo.studymind.service`
+- **Descrição:** Nenhum service utiliza `@Slf4j` + `log.info()`/`log.error()` para registrar operações de negócio. Não há logs de: criação de usuário, geração de plano, chamadas à API da Anthropic (tempo de resposta, tokens usados), falhas de autenticação, ou envio de emails. Em produção, depurar um problema exige acesso direto ao banco ou tentativa de reprodução.
+- **Impacto:** **Médio** — observabilidade zero; MTTR (tempo médio de resolução) de incidentes muito elevado.
+
+---
+
+### MEL-08 — Configuração CORS com headers wildcard combinado com `allowCredentials(true)`
+
+- **Arquivo:** `src/main/java/com/eduardo/studymind/infra/security/SecurityConfig.java` — linhas 72–77
+- **Descrição:** `config.setAllowedHeaders(List.of("*"))` combinado com `config.setAllowCredentials(true)` viola a especificação CORS (RFC 6454). Browsers modernos (Chrome 94+, Firefox) rejeitam respostas CORS com wildcard em `Access-Control-Allow-Headers` quando `Access-Control-Allow-Credentials: true` está presente. O correto é listar headers explícitos: `"Authorization"`, `"Content-Type"`, `"Accept"`.
+- **Impacto:** **Médio** — pode causar erros de CORS intermitentes dependendo do browser e versão.
+
+---
+
+### MEL-09 — Ausência de validação de tamanho nas mensagens do chat e campos de texto livre
+
+- **Arquivo:** `src/main/java/com/eduardo/studymind/dto/input/onboarding/DadosMensagemChat.java`
+- **Descrição:** O DTO `DadosMensagemChat` valida apenas `@NotNull`. Sem `@Size(max = N)`, um usuário pode enviar mensagens de vários megabytes que serão salvas na coluna `TEXT` e reenviadas integralmente para a API paga da Anthropic. O mesmo se aplica a campos como `descricao` em `DadosCadastroMateria` e `DadosCadastroTopico`.
+- **Impacto:** **Médio** — risco de abuso e custo descontrolado com a API da Anthropic.
+
+---
+
+### MEL-10 — Cobertura de testes insuficiente para componentes críticos
+
+- **Arquivos:** `src/test/java/com/eduardo/studymind/`
+- **Descrição:** Não existem testes para: `EmailService` (falha de envio, `send()` fora do try-catch), `AuthFilter` (token inválido, token expirado, ausência de token), `AnthropicClient` (timeout, resposta malformada), e cenários de falha do `PlanoEstudoParser` (JSON incompleto, enum inválido). Os testes existentes cobrem o caminho feliz dos services, mas os cenários de erro críticos permanecem sem cobertura.
+- **Impacto:** **Médio** — regressões nos componentes mais críticos só são detectadas em produção.
+
+---
+
+## 4. Dívidas Técnicas e Code Smells
+
+### DT-01 — Prompts de IA hardcoded como constantes estáticas no service
+
+- **Arquivo:** `src/main/java/com/eduardo/studymind/service/OnboardingService.java` — linhas 35–93
+- **Descrição:** `SYSTEM_PROMPT_ONBOARDING` e `SYSTEM_PROMPT_REVIEW` são constantes `private static final String` com ~60 linhas de texto cada, embutidas na classe de serviço. Qualquer ajuste de instrução à IA exige recompilação e redeploy. Prompts deveriam estar em arquivos de configuração (`classpath:prompts/onboarding.txt`), banco de dados ou um sistema de prompt versioning externo.
+
+---
+
+### DT-02 — Modelo da IA hardcoded em `AnthropicClient`
+
+- **Arquivo:** `src/main/java/com/eduardo/studymind/infra/ia/AnthropicClient.java` — linha 23
+- **Descrição:** `private static final String MODEL = "claude-haiku-4-5-20251001"` está fixo. Alterar para um modelo mais capaz (ex: Claude Sonnet para onboarding mais sofisticado) exige modificação de código e redeploy. Deveria ser configurável via `application.properties`: `anthropic.model=${ANTHROPIC_MODEL:claude-haiku-4-5-20251001}`.
+
+---
+
+### DT-03 — Remetente de email hardcoded em `EmailService`
+
+- **Arquivo:** `src/main/java/com/eduardo/studymind/service/EmailService.java` — linha 25
+- **Descrição:** `private static final String EMAIL_ORIGEM = "studymind@gmail.com"` está fixo no código. Em uma migração de domínio de email (ex: para `noreply@studymind.com.br`) seria necessário alterar o código em vez de apenas mudar uma variável de ambiente.
+
+---
+
+### DT-04 — `DadosListagemTarefa` e `DadosDetalhamentoTarefa` com mapeamento duplicado
+
+- **Arquivos:** `dto/output/tarefa/DadosListagemTarefa.java` e `DadosDetalhamentoTarefa.java`
+- **Descrição:** Ambos os records mapeiam os mesmos campos de `Tarefa` (id, usuario, topico, tipo, descricao, meta, prazo, status). A única diferença real é o campo `criadaEm` em `DadosDetalhamento`. A duplicação de lógica já resultou no BUG-01 (verificação de nulo presente num record mas ausente no outro).
+
+---
+
+### DT-05 — `OnboardingService` não usa a API de mensagens estruturadas da Anthropic
+
+- **Arquivo:** `src/main/java/com/eduardo/studymind/service/OnboardingService.java` — linhas 160–171
+- **Descrição:** O histórico de conversa é serializado como texto simples (`"Aluno: ...\nAssistente: ..."`), concatenado num único prompt textual. A API da Anthropic suporta a estrutura de `messages` com `role: user/assistant`, que é semanticamente mais precisa, melhora a qualidade das respostas e separa claramente o `system prompt` das mensagens do usuário. A interface `AIClient` só aceita uma `String`, forçando essa serialização manual e impedindo uso de recursos avançados (system prompt separado, streaming, etc.).
+
+---
+
+### DT-06 — TODO obsoleto em `SecurityConfig`
+
+- **Arquivo:** `src/main/java/com/eduardo/studymind/infra/security/SecurityConfig.java` — linha 74
+- **Descrição:** O comentário `// TODO: controle de acesso por role será implementado em versão futura` existe ao lado da linha comentada `// .requestMatchers("/admin/**").hasRole("ADMIN")`. O controle de admin já foi implementado nas linhas 49–55 com `hasAuthority("ADMIN")` em rotas específicas. O TODO é obsoleto e confuso para quem lê o código pela primeira vez.
+
+---
+
+### DT-07 — Verificação de autoridade como string literal em vez de enum
+
+- **Arquivo:** `src/main/java/com/eduardo/studymind/infra/security/SecurityConfig.java` — linhas 49–55
+- **Descrição:** `.hasAuthority("ADMIN")` usa string literal. O projeto já tem `com.eduardo.studymind.domain.usuario.Role` com o valor `ADMIN`. Usar `Role.ADMIN.name()` tornaria o código refatorável com segurança de tipo (o compilador detectaria um enum renomeado).
+
+---
+
+### DT-08 — Pacotes de DTOs de saída com nomenclatura inconsistente
+
+- **Arquivos:** `src/main/java/com/eduardo/studymind/dto/output/`
+- **Descrição:** A maioria dos pacotes segue o padrão `dto/output/[entidade]/` (ex: `tarefa`, `usuario`, `materia`), mas há exceções: `aulaoutput`, `questaogerada`, `questoesoutput`, `tarefadescricaooutput`. Os nomes deveriam ser `aula`, `questao`, `tarefadescricao` para consistência.
+
+---
+
+### DT-09 — `PlanoEstudoParser` usa `RuntimeException` genérica como mecanismo de erro
+
+- **Arquivo:** `src/main/java/com/eduardo/studymind/service/parser/PlanoEstudoParser.java` — linhas 52–53 e linha 139
+- **Descrição:** O bloco catch captura `Exception` e relança como `new RuntimeException("Erro ao parsear plano de estudos", e)`. O projeto possui exceções customizadas (`RegrasDeNegocioException`, `ErroIntegracaoIAException`) que seriam semanticamente mais corretas e teriam handlers específicos no `GlobalExceptionHandler`. Com `RuntimeException`, o handler genérico é acionado e o `ex.printStackTrace()` vaza o stack trace (BUG-02).
+
+---
+
+### DT-10 — `AIClient` com interface de baixo nível (apenas aceita String)
+
+- **Arquivo:** `src/main/java/com/eduardo/studymind/infra/ia/AIClient.java`
+- **Descrição:** A interface define apenas `String gerarResposta(String prompt)`. Isso força todos os callers a concatenar manualmente o histórico de conversa em texto (DT-05), impede uso de `system prompt` separado, streaming, controle de `max_tokens` por chamada ou uso de ferramentas (tool use). A interface deveria evoluir para aceitar uma lista de mensagens estruturadas.
+
+---
+
+## 5. Ideias de Novas Features
+
+### F-01 — Simulado Cronometrado
+
+- **Descrição funcional:** O aluno seleciona tópicos e quantidade de questões; o sistema monta um simulado com timer configurável (ex: 90 minutos para 30 questões). Ao finalizar, exibe gabarito comentado, taxa de acerto por tópico e salva os resultados automaticamente.
+- **Viabilidade técnica:** Aproveita `Questao`, `Resultado`, `ResultadoSessao` e `AulaService.gerarQuestoes()`. Requer nova entidade `Simulado` com campos `prazo`, `status`, `questoes`; endpoints `POST /simulado` e `POST /simulado/{id}/finalizar`.
+- **Esforço estimado:** **Médio**
+
+---
+
+### F-02 — Notificações de Lembrete de Tarefas com Prazo
+
+- **Descrição funcional:** O sistema envia um email automático quando uma tarefa está a 1 dia do prazo (`prazo`) ou quando há tarefas PENDENTE há mais de 3 dias sem interação.
+- **Viabilidade técnica:** Aproveita `Tarefa` (campo `prazo`), `TarefaRepository`, `EmailService` (infraestrutura já configurada) e `@Scheduled` do Spring. Um job `@Scheduled(cron = "0 8 * * *")` consulta tarefas pendentes próximas do prazo e dispara emails.
+- **Esforço estimado:** **Pequeno**
+
+---
+
+### F-03 — Dashboard de Progresso do Plano de Estudos
+
+- **Descrição funcional:** Visualização de quantas semanas do plano foram concluídas, percentual de tarefas CONCLUIDA vs PENDENTE por semana, e evolução da taxa de acerto por matéria desde o início do plano.
+- **Viabilidade técnica:** Aproveita `PlanoEstudo.conteudoJson` (JSON com semanas/tarefas), `Tarefa` (status), `ResultadoSessao` (taxaAcerto por matéria) e `PerformanceAnalyzerService`. Requer novo DTO `DadosProgressoPlano` e endpoint `GET /plano-estudo/progresso`.
+- **Esforço estimado:** **Médio**
+
+---
+
+### F-04 — Revisão Espaçada (Spaced Repetition)
+
+- **Descrição funcional:** Com base nos `Resultado` com status INCORRETO, o sistema agenda automaticamente tarefas de revisão para os próximos dias usando uma versão simplificada do algoritmo SM-2. Questões erradas reaparecem no dia seguinte; questões acertadas têm intervalo crescente.
+- **Viabilidade técnica:** Aproveita `Resultado`, `Questao`, `Tarefa` (tipo REVISAO). Novo serviço `SpacedRepetitionService` consulta erros recentes e cria tarefas de revisão com `prazo` calculado. A entidade `Tarefa` já tem `topico_id` (nullable), suportando o vínculo.
+- **Esforço estimado:** **Grande**
+
+---
+
+### F-05 — Exportação do Plano para PDF ou Calendário (`.ics`)
+
+- **Descrição funcional:** O aluno pode baixar o plano de estudos atual como PDF formatado (com todas as semanas, tarefas e metas) ou exportar como arquivo `.ics` para importar no Google Calendar ou Outlook, com alertas automáticos.
+- **Viabilidade técnica:** Aproveita `PlanoEstudo.conteudoJson` e `Tarefa` (campo `prazo`, `descricao`). Para `.ics` basta gerar texto padrão iCalendar — sem nova dependência. Para PDF, requer dependência (iText ou Apache PDFBox).
+- **Esforço estimado:** **Médio** (`.ics` pequeno; PDF médio)
+
+---
+
+### F-06 — Modo Flashcards com IA
+
+- **Descrição funcional:** Para cada tópico, a IA gera pares pergunta/resposta curtos (flashcards). O aluno os revisa e marca como "lembrou" ou "não lembrou". O sistema prioriza flashcards não lembrados nas sessões seguintes e registra o progresso.
+- **Viabilidade técnica:** Aproveita `AIClient`, `Topico`, `ResultadoSessao`. Requer nova entidade `Flashcard` (topicoId, pergunta, resposta, criadoEm) e novo prompt no `AulaService` para geração de pares. O fluxo de resposta é similar ao de questões.
+- **Esforço estimado:** **Médio**
+
+---
+
+### F-07 — Relatório Semanal por Email
+
+- **Descrição funcional:** Toda segunda-feira de manhã, o aluno recebe um email com um resumo da semana anterior: questões respondidas, taxa de acerto, tarefas concluídas e uma mensagem motivacional personalizada gerada pela IA com base no desempenho.
+- **Viabilidade técnica:** Aproveita `ResultadoSessao`, `Tarefa`, `EmailService`, `AIClient` e `RecommendationService`. Apenas um job `@Scheduled(cron = "0 8 * * MON")` que orquestra os dados já existentes e dispara o email.
+- **Esforço estimado:** **Pequeno**
+
+---
+
+### F-08 — Comparativo de Desempenho por Período
+
+- **Descrição funcional:** O aluno visualiza a evolução da sua taxa de acerto ao longo do tempo: gráfico por semana/mês em cada matéria, comparando o desempenho no início do plano vs. o período mais recente.
+- **Viabilidade técnica:** Aproveita `ResultadoSessao` (campo `respondidoEm`) e `PerformanceAnalyzerService`. Requer uma query agrupada por período (`GROUP BY DATE_TRUNC('week', respondido_em), topico_nome`) e novo endpoint `GET /dashboard/evolucao?periodo=semanas`.
+- **Esforço estimado:** **Pequeno**
+
+---
+
+### F-09 — Desafio Diário com Sistema de Streak
+
+- **Descrição funcional:** Todo dia, o sistema seleciona automaticamente 5 questões dos tópicos mais fracos do aluno e as apresenta como "Desafio do Dia". Ao concluir o desafio, o aluno mantém seu streak (dias consecutivos). Quebrar o streak por um dia aparece com alerta motivacional.
+- **Viabilidade técnica:** Aproveita `PerformanceAnalyzerService` (tópicos mais fracos), `Questao`, `Resultado` (para evitar repetição de questões já acertadas). Requer nova entidade `StreakUsuario` (usuarioId, ultimoDesafio, diasConsecutivos).
+- **Esforço estimado:** **Médio**
+
+---
+
+### F-10 — Onboarding Assistido por Boletim do ENEM
+
+- **Descrição funcional:** O aluno informa suas notas do ENEM anterior (por área de conhecimento). O sistema pré-preenche as matérias e níveis de dificuldade automaticamente com base nas notas, pulando as perguntas de onboarding sobre esse aspecto e acelerando a criação do plano.
+- **Viabilidade técnica:** Aproveita o fluxo `OnboardingService`, `Materia`, `Topico` e `PlanoEstudoParser`. Requer apenas um novo endpoint `POST /onboarding/importar-notas-enem` que transforma as notas informadas em JSON compatível com o `PlanoEstudoParser`.
+- **Esforço estimado:** **Médio** (sem integração externa; apenas parsing das notas informadas pelo usuário)
+
+---
+
+## 6. Prioridades Recomendadas
+
+| # | Item | Tipo | Impacto | Esforço | Prioridade |
+|---|------|------|---------|---------|------------|
+| 1 | **BUG-03** — `send()` fora do try-catch em `EmailService` | Bug | Alto | Baixo | 🔴 Crítica |
+| 2 | **BUG-01** — NPE em `DadosListagemTarefa` | Bug | Alto | Baixo | 🔴 Crítica |
+| 3 | **BUG-04** — Sem read timeout no `AnthropicClient` | Bug | Alto | Baixo | 🔴 Crítica |
+| 4 | **MEL-01** — `ResultadoSessao` sem FK para tópico/matéria | Melhoria | Alto | Médio | 🟠 Alta |
+| 5 | **MEL-02** — Sem rate limiting em endpoints de IA e auth | Melhoria | Alto | Médio | 🟠 Alta |
+| 6 | **BUG-02** — `ex.printStackTrace()` em produção | Bug | Médio | Baixo | 🟠 Alta |
+| 7 | **BUG-05** — Lookup de tópico sem filtro por usuário | Bug | Médio | Baixo | 🟠 Alta |
+| 8 | **MEL-08** — CORS wildcard + credentials | Melhoria | Médio | Baixo | 🟠 Alta |
+| 9 | **MEL-07** — Sem logs estruturados (SLF4J/@Slf4j) | Melhoria | Médio | Médio | 🟡 Média |
+| 10 | **MEL-03** — Sem token de refresh JWT | Melhoria | Médio | Médio | 🟡 Média |
+| 11 | **DT-01** — Prompts de IA hardcoded no código | Dívida | Médio | Médio | 🟡 Média |
+| 12 | **MEL-05** — Sem cache para aulas geradas pela IA | Melhoria | Médio | Médio | 🟡 Média |
+| 13 | **MEL-04** — Histórico de chat ilimitado em memória | Melhoria | Médio | Baixo | 🟡 Média |
+| 14 | **DT-05** — API da Anthropic sem mensagens estruturadas | Dívida | Médio | Grande | 🟡 Média |
+| 15 | **BUG-08** — `ObjectMapper` instanciado a cada chamada | Bug | Baixo | Baixo | 🟢 Baixa |
+| 16 | **F-07** — Relatório semanal por email | Feature | Alto (UX) | Pequeno | 🟠 Alta |
+| 17 | **F-02** — Notificação de tarefas com prazo | Feature | Alto (UX) | Pequeno | 🟠 Alta |
+| 18 | **F-08** — Comparativo de desempenho por período | Feature | Médio | Pequeno | 🟡 Média |
+| 19 | **F-03** — Dashboard de progresso do plano | Feature | Alto (UX) | Médio | 🟡 Média |
+| 20 | **F-01** — Simulado cronometrado | Feature | Alto (core) | Médio | 🟡 Média |
+| 21 | **F-09** — Desafio diário com streak | Feature | Alto (engajamento) | Médio | 🟡 Média |
+| 22 | **F-04** — Revisão espaçada (spaced repetition) | Feature | Alto (diferencial) | Grande | 🟢 Futura |
+
+### Resumo executivo
+
+**Correções urgentes — fazer antes de qualquer release em produção:**
+
+1. Mover `enviadorEmail.send(message)` para dentro do bloco try-catch em `EmailService.java` (linha 49)
+2. Adicionar checagem `tarefa.getTopico() != null` em `DadosListagemTarefa.java` (linhas 28–29), idêntica à já presente em `DadosDetalhamentoTarefa`
+3. Configurar `requestTimeout` ou `readTimeout` no `HttpClient` do `AnthropicClient.java` (ex: `Duration.ofSeconds(60)`)
+
+**Melhorias de alta prioridade — próximo sprint:**
+
+4. Normalizar `ResultadoSessao` adicionando `@ManyToOne topico` e `@ManyToOne materia` (migration V16)
+5. Adicionar rate limiting com Bucket4j ou Spring Cloud Gateway nos endpoints `/auth/**`, `/onboarding/**` e `/aula/**`
+6. Substituir `ex.printStackTrace()` por `log.error("Erro inesperado", ex)` no `GlobalExceptionHandler`
+
+**Features de maior ROI — menor esforço, maior impacto de UX:**
+
+7. Relatório semanal por email (aproveita 100% da infraestrutura existente, apenas orquestração)
+8. Notificação de tarefas com prazo (`@Scheduled` + `EmailService` já prontos)
+9. Endpoint de comparativo de desempenho por período (nova query + DTO)
+
+---
+
+*Este relatório foi gerado por análise estática completa do código-fonte presente no repositório. Nenhum arquivo de código-fonte foi modificado.*

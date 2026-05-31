@@ -9,7 +9,8 @@
       "Bash(ConvertTo-Csv -NoTypeInformation)",
       "Bash(Out-String)",
       "Bash(Get-ChildItem \"C:\\\\Users\\\\eduar\\\\studymind\\\\src\\\\main\\\\java\\\\com\\\\eduardo\\\\studymind\\\\controller\" -Filter \"*.java\")",
-      "Bash(Select-Object -ExpandProperty Name)"
+      "Bash(Select-Object -ExpandProperty Name)",
+      "PowerShell(head *)"
     ]
   }
 }
