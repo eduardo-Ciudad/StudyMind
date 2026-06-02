@@ -30,6 +30,9 @@ public class AnthropicClient implements AIClient {
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
 
+        var factory = new JdkClientHttpRequestFactory(httpClient);
+        factory.setReadTimeout(Duration.ofSeconds(120));
+
         this.restClient = RestClient.builder()
                 .requestFactory(new JdkClientHttpRequestFactory(httpClient))
                 .build();
