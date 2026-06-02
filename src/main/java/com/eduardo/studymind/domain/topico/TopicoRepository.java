@@ -21,6 +21,10 @@ public interface TopicoRepository extends JpaRepository<Topico, Long> {
 
     Optional<Topico> findByNomeAndMateriaNome(String nome, String materiaNome);
 
+    Optional<Topico> findByNomeAndMateriaNomeAndUsuarioId(
+            String nome, String materiaNome, Long usuarioId
+    );
+
     @Query("SELECT t FROM Topico t JOIN FETCH t.materia WHERE t.ativo = true AND t.usuario.id = :usuarioId")
     List<Topico> findAllByAtivoTrueWithMateriaAndUsuarioId(@Param("usuarioId") Long usuarioId);
 }

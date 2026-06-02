@@ -47,12 +47,16 @@ public class PerformanceAnalyzerService {
                             : 0.0;
 
                     Long topicoId = topicoRepository
-                            .findByNomeAndMateriaNome(primeira.getTopicoNome(), primeira.getMateriaNome())
+                            .findByNomeAndMateriaNomeAndUsuarioId(
+                                    primeira.getTopicoNome(),
+                                    primeira.getMateriaNome(),
+                                    usuarioId
+                            )
                             .map(Topico::getId)
                             .orElse(null);
 
                     return new DadosDesempenhoTopico(
-                            null, // ResultadoSessao não tem topicoId
+                            topicoId, // ← usa o valor resolvido
                             primeira.getTopicoNome(),
                             primeira.getMateriaNome(),
                             totalRespostas,
