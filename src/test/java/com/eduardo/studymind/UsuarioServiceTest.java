@@ -7,6 +7,7 @@ import com.eduardo.studymind.dto.input.usuario.DadosAtualizacaoUsuario;
 import com.eduardo.studymind.dto.input.usuario.DadosCadastroUsuario;
 import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
 import com.eduardo.studymind.exception.RegrasDeNegocioException;
+import com.eduardo.studymind.service.TokenVerificacaoService;
 import com.eduardo.studymind.service.UsuarioService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,14 +23,16 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UsuarioServiceTest {
 
     @Mock
     private UsuarioRepository usuarioRepository;
+
+    @Mock
+    private TokenVerificacaoService tokenVerificacaoService;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -50,6 +53,8 @@ class UsuarioServiceTest {
 
         when(usuarioRepository.existsByEmail("edu@email.com")).thenReturn(false);
         when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioSalvo);
+
+        doNothing().when(tokenVerificacaoService).gerarEEnviarToken(any(Usuario.class));
 
         var resultado = usuarioService.cadastrarUsuario(dados);
 
