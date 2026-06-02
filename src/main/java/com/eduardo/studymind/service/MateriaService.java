@@ -12,11 +12,13 @@ import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
 import com.eduardo.studymind.exception.RegrasDeNegocioException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MateriaService {
@@ -40,6 +42,7 @@ public class MateriaService {
         materia.setAtiva(true);
 
         var materiaSalva = materiaRepository.save(materia);
+        log.info("Matéria cadastrada com sucesso. Id: {}", materiaSalva.getId());
         return new DadosDetalhamentoMateria(materiaSalva);
     }
 
@@ -58,6 +61,7 @@ public class MateriaService {
 
     @Transactional
     public DadosDetalhamentoMateria atualizarMateria (Long id, DadosAtualizacaoMateria dados) {
+        log.info("Atualizando matéria. Id: {}", id);
         var materia = materiaRepository.findById(id)
         .orElseThrow(() -> new RecursoNaoEncontradoException("Materia nao encontrada"));
 
@@ -70,6 +74,7 @@ public class MateriaService {
 
     @Transactional
     public void desativarMateria(Long id) {
+        log.info("Desativando matéria. Id: {}", id);
         var materia = materiaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Materia nao encontrada"));
         materia.setAtiva(false);

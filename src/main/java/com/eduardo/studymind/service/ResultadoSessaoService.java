@@ -8,10 +8,12 @@ import com.eduardo.studymind.dto.input.resultado.DadosCadastroResultadoSessao;
 import com.eduardo.studymind.dto.output.resultado.DadosResultadoSessaoOutput;
 import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ResultadoSessaoService {
@@ -36,6 +38,7 @@ public class ResultadoSessaoService {
         sessao.setTaxaAcerto(taxaAcerto);
 
         repository.save(sessao);
+        log.info("Resultado de sessão salvo com sucesso. Id: {}", sessao.getId());
 
         return new DadosResultadoSessaoOutput(
                 sessao.getId(),

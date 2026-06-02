@@ -11,11 +11,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AulaService {
@@ -27,7 +29,7 @@ public class AulaService {
         Topico topico = topicoRepository.findById(topicoId)
                 .orElseThrow(() -> new EntityNotFoundException("Tópico não encontrado"));
 
-
+        log.info("Iniciando geração de aula para topicoId: {}", topicoId);
 
         String prompt = """
                 Você é um professor especialista preparando material de estudo personalizado.
@@ -60,10 +62,11 @@ public class AulaService {
         Topico topico = topicoRepository.findById(topicoId)
                 .orElseThrow(() -> new EntityNotFoundException("Tópico não encontrado"));
 
+        log.info("Iniciando geração de {} questões para topicoId: {}", quantidade, topicoId);
 
         String prompt = """
-                
-                
+
+
                 Você é um professor criando questões de revisão para vestibular/ENEM.
                 
                 Tópico: %s
@@ -186,6 +189,7 @@ public class AulaService {
                     recomendacoes
             );
         } catch (Exception e) {
+            log.error("Erro ao fazer parse do JSON de aula da IA", e);
             throw new ErroIntegracaoIAException("Erro ao processar resposta da IA para aula", e);
         }
     }
@@ -216,6 +220,7 @@ public class AulaService {
                     questoes
             );
         } catch (Exception e) {
+            log.error("Erro ao fazer parse do JSON de questões da IA", e);
             throw new ErroIntegracaoIAException("Erro ao processar resposta da IA para questões", e);
         }
     }

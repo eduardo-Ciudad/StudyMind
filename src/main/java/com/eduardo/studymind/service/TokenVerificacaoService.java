@@ -6,9 +6,11 @@ import com.eduardo.studymind.domain.usuario.Usuario;
 import com.eduardo.studymind.domain.usuario.UsuarioRepository;
 import com.eduardo.studymind.exception.RegrasDeNegocioException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TokenVerificacaoService {
@@ -18,6 +20,7 @@ public class TokenVerificacaoService {
 
     @Transactional
     public void gerarEEnviarToken(Usuario usuario){
+        log.info("Gerando e enviando token de verificação para usuarioId: {}", usuario.getId());
         TokenVerificacao token = new TokenVerificacao(usuario);
         tokenRepository.save(token);
         emailService.enviarEmailVerificacao(usuario, token.getToken());
@@ -38,6 +41,7 @@ public class TokenVerificacaoService {
 
         token.getUsuario().setAtivo(true);
         token.marcarComoUtilizado();
+        log.info("Conta ativada com sucesso para usuarioId: {}", token.getUsuario().getId());
     }
 
 }

@@ -16,11 +16,13 @@ import com.eduardo.studymind.infra.ia.AIClient;
 import com.eduardo.studymind.service.parser.PlanoEstudoParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OnboardingService {
@@ -100,6 +102,7 @@ public class OnboardingService {
 
     @Transactional
     public DadosRespostaChat enviarMensagem(Long usuarioId, String mensagemUsuario) {
+        log.info("Iniciando onboarding para usuarioId: {}", usuarioId);
         var usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado"));
 
@@ -112,6 +115,7 @@ public class OnboardingService {
 
     @Transactional
     public DadosRespostaChat enviarMensagemReview(Long usuarioId, String mensagemUsuario) {
+        log.info("Recebendo mensagem de review para usuarioId: {}", usuarioId);
         var usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado"));
 
@@ -123,6 +127,7 @@ public class OnboardingService {
     }
 
     private DadosRespostaChat processarMensagem(Usuario usuario, String mensagemUsuario, String systemPrompt) {
+        log.info("Mensagem recebida do usuarioId: {}", usuario.getId());
         var msgUsuario = new ChatMensagem();
         msgUsuario.setUsuario(usuario);
         msgUsuario.setRole(RoleChat.USER);
@@ -173,6 +178,7 @@ public class OnboardingService {
 
     private void salvarPlanoEFinalizar(Usuario usuario, String respostaComJson) {
         try {
+            log.info("Gerando plano de estudos para usuarioId: {}", usuario.getId());
             var inicioJson = respostaComJson.indexOf("{");
             if (inicioJson == -1) {
                 throw new RuntimeException("IA não retornou JSON válido");
@@ -208,8 +214,10 @@ public class OnboardingService {
 
             usuario.setOnboardingConcluido(true);
             usuarioRepository.save(usuario);
+            log.info("Plano de estudos gerado e finalizado para usuarioId: {}", usuario.getId());
 
         } catch (Exception e) {
+            log.error("Erro ao processar plano de estudos para usuarioId: {}", usuario.getId(), e);
             throw new ErroIntegracaoIAException("Erro ao processar plano de estudos", e);
         }
     }

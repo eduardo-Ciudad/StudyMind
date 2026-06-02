@@ -7,11 +7,13 @@ import com.eduardo.studymind.exception.ErroIntegracaoIAException;
 import com.eduardo.studymind.infra.ia.AIClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RecommendationService {
@@ -21,6 +23,7 @@ public class RecommendationService {
     private final ObjectMapper objectMapper;
 
     public DadosRecomendacao gerarRecomendacao(Long usuarioId) {
+        log.info("Gerando recomendação para usuarioId: {}", usuarioId);
         var desempenho = performanceAnalyzerService.analisarDesempenho(usuarioId);
         try {
             var prompt = montarPrompt(desempenho);
@@ -29,6 +32,7 @@ public class RecommendationService {
         } catch (ErroIntegracaoIAException e) {
             throw e;
         } catch (Exception e) {
+            log.error("Erro ao processar resposta da IA para recomendação do usuarioId: {}", usuarioId, e);
             throw new ErroIntegracaoIAException("Erro ao processar resposta da IA", e);
         }
     }
@@ -90,6 +94,7 @@ public class RecommendationService {
                     desempenho.taxaAcertoGeral()
             );
         } catch (Exception e) {
+            log.error("Erro ao fazer parse da resposta da IA para recomendação", e);
             throw new ErroIntegracaoIAException("Erro ao processar resposta da IA", e);
         }
     }

@@ -14,12 +14,14 @@ import com.eduardo.studymind.dto.output.tarefa.DadosListagemTarefa;
 import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
 import com.eduardo.studymind.exception.RegrasDeNegocioException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Locale;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TarefaService {
@@ -57,6 +59,7 @@ public class TarefaService {
         tarefa.setStatus(TarefaStatus.PENDENTE);
 
         var tarefaSalva = tarefaRepository.save(tarefa);
+        log.info("Tarefa cadastrada com sucesso. Id: {}", tarefaSalva.getId());
         return new DadosDetalhamentoTarefa(tarefaSalva);
     }
 
@@ -76,6 +79,7 @@ public class TarefaService {
 
     @Transactional
     public DadosDetalhamentoTarefa atualizarTarefa(Long id, DadosAtualizacaoTarefa dados){
+        log.info("Atualizando tarefa. Id: {}", id);
         var tarefa = tarefaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Tarefa não encontrada"));
         if (tarefa.getStatus() == TarefaStatus.CONCLUIDA || tarefa.getStatus() == TarefaStatus.CANCELADA) {
@@ -93,6 +97,7 @@ public class TarefaService {
 
     @Transactional
     public void cancelar(Long id){
+        log.info("Cancelando tarefa. Id: {}", id);
         var tarefa = tarefaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Tarefa nao encontrada"));
 

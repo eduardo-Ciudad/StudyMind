@@ -10,11 +10,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TarefaDescricaoService {
@@ -23,6 +25,7 @@ public class TarefaDescricaoService {
     private final TarefaRepository tarefaRepository;
 
     public DadosTarefaDescricao gerarDescricao(Long tarefaId) {
+        log.info("Gerando descrição para tarefaId: {}", tarefaId);
         Tarefa tarefa = tarefaRepository.findByIdWithTopico(tarefaId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Tarefa não encontrada"));
 
@@ -72,6 +75,7 @@ public class TarefaDescricaoService {
                     passos
             );
         } catch (Exception e) {
+            log.error("Erro ao fazer parse do JSON de descrição da IA", e);
             throw new ErroIntegracaoIAException("Erro ao processar resposta da IA para tarefa", e);
         }
     }

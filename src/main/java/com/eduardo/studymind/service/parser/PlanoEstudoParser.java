@@ -13,12 +13,14 @@ import com.eduardo.studymind.domain.usuario.Usuario;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PlanoEstudoParser {
@@ -32,6 +34,7 @@ public class PlanoEstudoParser {
     @Transactional
     public void parsearEPopular(Usuario usuario, String conteudoJson) {
         try {
+            log.info("Iniciando parse do plano de estudos para usuarioId: {}", usuario.getId());
             var planoNode = objectMapper.readTree(conteudoJson);
             var materiasNode = planoNode.get("materias");
             var semanasNode = planoNode.get("semanas");
@@ -48,7 +51,15 @@ public class PlanoEstudoParser {
             // PASSO 2 — processa semanas e tarefas
             processarSemanas(usuario, semanasNode, materiasPorNome);
 
+            int totalTarefas = 0;
+            for (var semana : semanasNode) {
+                var t = semana.get("tarefas");
+                if (t != null) totalTarefas += t.size();
+            }
+            log.info("Plano parseado com sucesso. {} tarefas criadas para usuarioId: {}", totalTarefas, usuario.getId());
+
         } catch (Exception e) {
+            log.error("Erro ao parsear plano de estudos para usuarioId: {}", usuario.getId(), e);
             throw new RuntimeException("Erro ao parsear plano de estudos", e);
         }
     }

@@ -7,6 +7,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
@@ -27,6 +29,7 @@ public class EmailService {
 
     @Async
     public void enviarEmailVerificacao(Usuario usuario, String token){
+        log.info("Iniciando envio de email de verificação para: {}", usuario.getEmail());
         String assunto = "Verifique seu email - StudyMind";
         String url = urlSite + "/verificar.html?token=" + token;
         String conteudo = gerarConteudo(usuario.getNome(), url);
@@ -43,8 +46,9 @@ public class EmailService {
             helper.setSubject(assunto);
             helper.setText(conteudo, true);
             enviadorEmail.send(message);
-
+            log.info("Email enviado com sucesso para: {}", emailUsuario);
         } catch (MessagingException | UnsupportedEncodingException e) {
+            log.error("Erro ao enviar email para: {}", emailUsuario, e);
             throw new RegrasDeNegocioException("Erro ao enviar email de verificação");
         }
 

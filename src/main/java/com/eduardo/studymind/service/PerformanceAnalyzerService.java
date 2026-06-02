@@ -8,12 +8,14 @@ import com.eduardo.studymind.domain.topico.TopicoRepository;
 import com.eduardo.studymind.dto.output.performance.DadosDesempenhoTopico;
 import com.eduardo.studymind.dto.output.performance.DadosDesempenhoUsuario;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -24,6 +26,7 @@ public class PerformanceAnalyzerService {
 
 
     public DadosDesempenhoUsuario analisarDesempenho(Long usuarioId) {
+        log.info("Analisando desempenho do usuarioId: {}", usuarioId);
         var sessoes = resultadoSessaoRepository.findByUsuarioId(usuarioId);
 
         // agrupa as sessões por tópico

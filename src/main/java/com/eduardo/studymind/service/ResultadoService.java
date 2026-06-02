@@ -10,11 +10,13 @@ import com.eduardo.studymind.dto.output.resultado.DadosDetalhamentoResultado;
 import com.eduardo.studymind.dto.output.resultado.DadosListagemResultados;
 import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ResultadoService {
@@ -37,6 +39,7 @@ public class ResultadoService {
         resultado.setRespostaUsuario(dados.respostaUsuario());
 
         var resultadoSalvo = resultadoRepository.save(resultado);
+        log.info("Resultado cadastrado com sucesso. Id: {}", resultadoSalvo.getId());
         return new DadosDetalhamentoResultado(resultadoSalvo);
     }
 

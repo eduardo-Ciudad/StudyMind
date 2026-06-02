@@ -10,11 +10,13 @@ import com.eduardo.studymind.dto.output.questao.DadosDetalhamentoQuestao;
 import com.eduardo.studymind.dto.output.questao.DadosListagemQuestao;
 import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class QuestaoService {
@@ -33,6 +35,7 @@ public class QuestaoService {
         questao.setAtiva(true);
 
         var questaoSalva = questaoRepository.save(questao);
+        log.info("Questão cadastrada com sucesso. Id: {}", questaoSalva.getId());
         return new DadosDetalhamentoQuestao(questaoSalva);
     }
 
@@ -43,6 +46,7 @@ public class QuestaoService {
 
     @Transactional
     public DadosDetalhamentoQuestao atualizar(Long id, DadosAtualizacaoQuestao dados) {
+        log.info("Atualizando questão. Id: {}", id);
         var questao = questaoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Questao nao encontrado"));
         if(dados.enunciado() != null) questao.setEnunciado(dados.enunciado());
@@ -54,6 +58,7 @@ public class QuestaoService {
 
     @Transactional
     public void inativar(Long id) {
+        log.info("Inativando questão. Id: {}", id);
        var questao =  questaoRepository.findById(id)
                .orElseThrow(() -> new RecursoNaoEncontradoException("Questao nao encontrado"));
        questao.setAtiva(false);

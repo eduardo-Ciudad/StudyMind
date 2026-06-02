@@ -10,6 +10,7 @@ import com.eduardo.studymind.dto.output.usuario.DadosListagemUsuario;
 import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
 import com.eduardo.studymind.exception.RegrasDeNegocioException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UsuarioService {
@@ -29,6 +31,7 @@ public class UsuarioService {
 
     @Transactional
     public DadosDetalhamentoUsuario cadastrarUsuario(DadosCadastroUsuario dados){
+        log.info("Cadastrando usuário com email: {}", dados.email());
         if(usuarioRepository.existsByEmail(dados.email())) {
             throw new RegrasDeNegocioException("E-mail já cadastrado");
         }
@@ -41,6 +44,7 @@ public class UsuarioService {
         usuario.setAtivo(false);
 
         var usuarioSalvo = usuarioRepository.save(usuario);
+        log.info("Usuário cadastrado com sucesso. Id: {}", usuarioSalvo.getId());
         tokenVerificacaoService.gerarEEnviarToken(usuarioSalvo);
 
 
@@ -61,6 +65,7 @@ public class UsuarioService {
 
     @Transactional
     public DadosDetalhamentoUsuario atualizarUsuario(Long id, DadosAtualizacaoUsuario dados){
+        log.info("Atualizando usuário. Id: {}", id);
         var usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario não Encontrado"));
 
@@ -83,6 +88,7 @@ public class UsuarioService {
 
     @Transactional
     public void desativar(Long id){
+        log.info("Desativando usuário. Id: {}", id);
         var usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuario nao encontrado"));
         usuario.setAtivo(false);

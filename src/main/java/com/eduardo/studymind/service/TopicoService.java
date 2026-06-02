@@ -13,11 +13,13 @@ import com.eduardo.studymind.dto.output.topico.DadosListagemTopico;
 import com.eduardo.studymind.exception.RecursoNaoEncontradoException;
 import com.eduardo.studymind.exception.RegrasDeNegocioException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TopicoService {
@@ -46,6 +48,7 @@ public class TopicoService {
         topico.setAtivo(true);
 
         var topicoSalvo = topicoRepository.save(topico);
+        log.info("Tópico cadastrado com sucesso. Id: {}", topicoSalvo.getId());
         return new DadosDetalhamentoTopico(topicoSalvo);
     }
 
@@ -76,6 +79,7 @@ public class TopicoService {
 
     @Transactional
     public DadosDetalhamentoTopico atualizar(Long id, DadosAtualizacaoTopico dados) {
+        log.info("Atualizando tópico. Id: {}", id);
         var topico = topicoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Topico nao encontrado"));
 
@@ -89,6 +93,7 @@ public class TopicoService {
 
     @Transactional
     public void desativar(Long id) {
+        log.info("Desativando tópico. Id: {}", id);
         var topico = topicoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Topico nao encontrado"));
         topico.setAtivo(false);
