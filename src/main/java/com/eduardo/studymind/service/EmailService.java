@@ -42,11 +42,12 @@ public class EmailService {
             helper.setTo(emailUsuario);
             helper.setSubject(assunto);
             helper.setText(conteudo, true);
+            enviadorEmail.send(message);
+
         } catch (MessagingException | UnsupportedEncodingException e) {
             throw new RegrasDeNegocioException("Erro ao enviar email de verificação");
         }
 
-        enviadorEmail.send(message);
     }
 
     private String gerarConteudo(String nome, String url) {
