@@ -42,7 +42,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/registro").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/auth/verificar").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/auth/**").permitAll()
                        // .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // Rotas exclusivas de ADMIN

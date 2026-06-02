@@ -19,7 +19,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @Tag(name = "Autenticação", description = "Endpoints para autenticação e registro de usuários")
 @RestController
@@ -31,6 +34,7 @@ public class AuthController {
     private final JwtService jwtService;
     private final UsuarioService usuarioService;
     private final TokenVerificacaoService tokenVerificacaoService;
+    private final UserDetailsService userDetailsService;
 
     @Operation(summary = "Realizar login", description = "Autentica o usuário com email e senha e retorna um token JWT")
     @ApiResponses({
@@ -44,7 +48,25 @@ public class AuthController {
         var authentication = authenticationManager.authenticate(authToken);
         var usuario = (Usuario) authentication.getPrincipal();
         var token = jwtService.gerarToken(usuario);
-        return ResponseEntity.ok(new DadosTokenJwt(token));
+        var refreshToken = jwtService.gerarRefreshToken(usuario);
+        return ResponseEntity.ok(new DadosTokenJwt(token, refreshToken));
+    }
+
+    @Operation(summary = "Renovar token", description = "Gera um novo access token a partir de um refresh token válido")
+    @PostMapping("/refresh")
+    public ResponseEntity<DadosTokenJwt> refresh(@RequestBody Map<String, String> body) {
+        var refreshToken = body.get("refreshToken");
+        var email = jwtService.validarRefreshToken(refreshToken);
+
+        if (email == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        var usuario = (Usuario) userDetailsService.loadUserByUsername(email);
+        var novoToken = jwtService.gerarToken(usuario);
+        var novoRefreshToken = jwtService.gerarRefreshToken(usuario);
+
+        return ResponseEntity.ok(new DadosTokenJwt(novoToken, novoRefreshToken));
     }
 
     @Operation(summary = "Registrar novo usuário", description = "Cria uma nova conta de usuário na plataforma")
