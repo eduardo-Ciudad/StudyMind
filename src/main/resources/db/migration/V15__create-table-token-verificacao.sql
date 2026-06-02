@@ -7,3 +7,4 @@ CREATE TABLE tokens_verificacao (
 
     CONSTRAINT fk_token_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
+
