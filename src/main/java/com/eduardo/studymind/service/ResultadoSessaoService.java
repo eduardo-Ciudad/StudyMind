@@ -1,7 +1,9 @@
 package com.eduardo.studymind.service;
 
+import com.eduardo.studymind.domain.materia.MateriaRepository;
 import com.eduardo.studymind.domain.resultado.ResultadoSessao;
 import com.eduardo.studymind.domain.resultado.ResultadoSessaoRepository;
+import com.eduardo.studymind.domain.topico.TopicoRepository;
 import com.eduardo.studymind.domain.usuario.Usuario;
 import com.eduardo.studymind.domain.usuario.UsuarioRepository;
 import com.eduardo.studymind.dto.input.resultado.DadosCadastroResultadoSessao;
@@ -20,6 +22,8 @@ public class ResultadoSessaoService {
 
     private final ResultadoSessaoRepository repository;
     private final UsuarioRepository usuarioRepository;
+    private final TopicoRepository topicoRepository;
+    private final MateriaRepository materiaRepository;
 
     public DadosResultadoSessaoOutput salvar(DadosCadastroResultadoSessao dados, Long usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
@@ -33,6 +37,15 @@ public class ResultadoSessaoService {
         sessao.setUsuario(usuario);
         sessao.setTopicoNome(dados.topicoNome());
         sessao.setMateriaNome(dados.materiaNome());
+
+        topicoRepository.findByNomeAndMateriaNomeAndUsuarioId(
+                        dados.topicoNome(), dados.materiaNome(), usuarioId)
+                .ifPresent(sessao::setTopico);
+
+        materiaRepository.findByNomeAndUsuarioId(dados.materiaNome(), usuarioId)
+                .ifPresent(sessao::setMateria);
+
+
         sessao.setTotalQuestoes(dados.totalQuestoes());
         sessao.setAcertos(dados.acertos());
         sessao.setTaxaAcerto(taxaAcerto);
