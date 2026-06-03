@@ -3,14 +3,14 @@
 ![Java](https://img.shields.io/badge/Java-17-orange?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-336791?style=for-the-badge&logo=postgresql&logoColor=white)
-![Flyway](https://img.shields.io/badge/Flyway-V1--V14-CC0200?style=for-the-badge&logo=flyway&logoColor=white)
+![Flyway](https://img.shields.io/badge/Flyway-V1--V16-CC0200?style=for-the-badge&logo=flyway&logoColor=white)
 ![Spring Security](https://img.shields.io/badge/Spring_Security-JWT-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white)
 ![Anthropic](https://img.shields.io/badge/Anthropic-Claude_Haiku-purple?style=for-the-badge)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![JUnit](https://img.shields.io/badge/Tests-54_Passing-success?style=for-the-badge)
+![JUnit](https://img.shields.io/badge/Tests-58_Passing-success?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Active_Development-yellow?style=for-the-badge)
 
-> AI-powered study planning platform that creates personalized 12-week study roadmaps through a conversational onboarding experience.
+> AI-powered study planning platform that creates personalized 6-week study roadmaps through a conversational onboarding experience.
 
 ---
 
@@ -27,7 +27,7 @@ The main differentiator is an **AI-driven conversational onboarding flow**. Inst
 - Daily study hours available
 - Strengths and weaknesses
 
-Based on this conversation, the system generates a **personalized 12-week study plan**, parses it automatically, and populates the database with subjects, topics, and weekly tasks — no manual setup required.
+Based on this conversation, the system generates a **personalized 6-week study plan**, parses it automatically, and populates the database with subjects, topics, and weekly tasks — no manual setup required.
 
 ---
 
@@ -42,7 +42,6 @@ Based on this conversation, the system generates a **personalized 12-week study 
 
 ### 🔄 Study Plan Review Cycle
 - User can request a review at any time
-- AI automatically prompts a review every 3–4 weeks
 - New versioned plan generated without repeating previous content
 - Full plan history preserved in the database
 
@@ -59,11 +58,17 @@ Based on this conversation, the system generates a **personalized 12-week study 
 - Motivational insights and practical tips
 
 ### 🔐 Security
-- JWT authentication (stateless, 2h expiry)
+- JWT authentication with **access token (2h)** and **refresh token (7 days)**
 - BCrypt password hashing
 - Ownership verification — users can only access their own data
 - CORS configured for frontend integration
-- Role-based authorization (ADMIN / ALUNO) — roles defined, endpoint-level restrictions planned (see Roadmap)
+- Role-based authorization (ADMIN / ALUNO)
+- **Rate limiting** with Bucket4j — 10 req/min on auth endpoints, 5 req/min on AI endpoints
+
+### 📋 Observability
+- Structured logging with SLF4J (`@Slf4j`) across all service classes
+- Read timeout configured on Anthropic API client (120s)
+- Global exception handler with proper log levels (no `printStackTrace`)
 
 ### 🐳 Docker
 - Fully containerized with `Dockerfile` and `docker-compose.yml`
@@ -72,17 +77,13 @@ Based on this conversation, the system generates a **personalized 12-week study 
 - Ready for local development and deployment
 
 ### 🧪 Testing
-- 54 automated test scenarios
+- 58 automated test scenarios
 - Unit tests with Mockito and ArgumentCaptor
 - Integration tests with `@SpringBootTest` and MockMvc
 
 ---
 
-## 📐 Arquitetura
-
-Diagrama interativo com entidades, services, fluxos de segurança e camada de IA:
-
-👉 [Ver arquitetura do sistema](https://eduardo-ciudad.github.io/studymind-arquitetura/)
+## 📐 Architecture
 
 **Key architectural decisions:**
 
@@ -92,6 +93,7 @@ Diagrama interativo com entidades, services, fluxos de segurança e camada de IA
 - Pagination on high-volume endpoints
 - Dependency inversion for AI provider (swap Claude for GPT without changing business logic)
 - Per-user data isolation — subjects and topics are scoped to each user
+- Referential integrity on `resultado_sessoes` — `topico_id` and `materia_id` FK columns added in V16
 
 ---
 
@@ -124,13 +126,13 @@ Chat with AI (persistent history)
       ↓
 AI collects: exam, date, subjects, level, hours, strengths/weaknesses
       ↓
-AI emits: ONBOARDING_COMPLETO + structured JSON roadmap (12 weeks)
+AI emits: ONBOARDING_COMPLETO + structured JSON roadmap (6 weeks)
       ↓
 System saves study plan in plano_estudo (versao=1, ativo=true)
       ↓
 PlanoEstudoParser auto-creates subjects, topics and weekly tasks
       ↓
-[Review cycle] User triggers review or AI prompts every 3-4 weeks
+[Review cycle] User triggers review
       ↓
 AI generates new versioned plan (versao++) without repeating content
       ↓
@@ -150,6 +152,11 @@ Usuario
  ├── Materia            ← subjects (per user, auto-created from plan)
  └── Topico             ← topics (per user, auto-created from plan)
       └── Questao       ← questions linked to topics
+
+ResultadoSessao
+ ├── usuario_id         ← FK → usuarios
+ ├── topico_id          ← FK → topicos (nullable, added V16)
+ └── materia_id         ← FK → materias (nullable, added V16)
 ```
 
 ---
@@ -162,8 +169,9 @@ Usuario
 | Framework | Spring Boot 3.5 |
 | Database | PostgreSQL 17 |
 | ORM | Spring Data JPA / Hibernate |
-| Migrations | Flyway (V1–V14) |
+| Migrations | Flyway (V1–V16) |
 | Security | Spring Security + Auth0 JWT |
+| Rate Limiting | Bucket4j |
 | AI Integration | Anthropic Claude Haiku via RestClient |
 | Validation | Jakarta Bean Validation |
 | Testing | JUnit 5, Mockito, MockMvc |
@@ -193,12 +201,13 @@ src/main/java/com/eduardo/studymind/
 ├── exception/           ← Custom exceptions + global handler
 ├── infra/
 │   ├── ia/              ← AIClient interface + AnthropicClient
-│   └── security/        ← AuthFilter, JwtService, SecurityConfig, SecurityUtils
-└── service/             ← Business logic (9 services)
+│   └── security/        ← AuthFilter, JwtService, SecurityConfig, SecurityUtils, RateLimitingFilter
+└── service/             ← Business logic (14 services)
     └── parser/          ← PlanoEstudoParser
 
 src/main/resources/
-├── db/migration/        ← Flyway scripts V1–V14
+├── db/migration/        ← Flyway scripts V1–V16
+├── prompts/             ← AI prompt files (onboarding.txt, review.txt)
 ├── application.properties
 ├── application-dev.properties
 └── application-prod.properties
@@ -212,7 +221,9 @@ src/main/resources/
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | `/auth/registro` | Register new user |
-| POST | `/auth/login` | Login and receive JWT |
+| POST | `/auth/login` | Login and receive access + refresh token |
+| POST | `/auth/refresh` | Refresh access token using refresh token |
+| GET | `/auth/verificar` | Verify email via token |
 
 ### 💬 Onboarding
 | Method | Endpoint | Description |
@@ -279,7 +290,7 @@ ANTHROPIC_API_KEY=your_anthropic_api_key
 docker-compose up --build
 ```
 
-This starts both the API and a PostgreSQL instance. Flyway will automatically apply all 14 migrations on startup.
+This starts both the API and a PostgreSQL instance. Flyway will automatically apply all 16 migrations on startup.
 
 ### Run Locally (Without Docker)
 
@@ -303,35 +314,39 @@ Requires Java 17+ and PostgreSQL 17+ installed locally.
 - [x] Core domain model (8 entities)
 - [x] Full CRUD REST APIs
 - [x] JWT authentication + BCrypt
+- [x] Access token (2h) + Refresh token (7 days)
+- [x] Rate limiting with Bucket4j
+- [x] Structured logging with SLF4J across all services
 - [x] Global exception handling
 - [x] Database indexing (V7)
 - [x] Per-user data isolation for subjects and topics (V12)
+- [x] Referential integrity on ResultadoSessao — topico_id and materia_id FKs (V16)
 - [x] AI integration with Anthropic Claude Haiku
 - [x] Performance analysis engine
 - [x] Personalized AI recommendations
-- [x] Conversational onboarding (12-week plan)
+- [x] Conversational onboarding (6-week plan)
 - [x] Auto-population of subjects, topics and tasks from AI plan
 - [x] Study plan versioning and review cycle
-- [x] 54 automated tests
+- [x] 58 automated tests
 - [x] Swagger/OpenAPI documentation
 - [x] Docker + docker-compose
 
 ### 🔄 In Progress
-- [ ] Tests for `OnboardingService` and `PlanoEstudoParser`
-- [ ] Frontend prototype connected to the real API
+- [ ] Tests for `AuthControllerTest` and `StudymindApplicationTests` with embedded database
+- [ ] AI prompt files externalized from source code
 
 ### 🔮 Future
 - [ ] CI/CD pipeline
-- [ ] Refresh token support
 - [ ] Notifications and reminders
 - [ ] Spaced repetition scheduler
 - [ ] Multi-provider AI support (OpenAI, Gemini)
+- [ ] Cache for AI-generated lesson content
 
 ---
 
 ## 🎯 Project Goal
 
-The ultimate goal of StudyMind is for a student to simply answer a few questions in a natural chat and receive a **complete personalized study structure generated automatically by AI** — subjects, topics, and 12 weeks of tasks created instantly, with a review cycle that adapts the plan as the student progresses.
+The ultimate goal of StudyMind is for a student to simply answer a few questions in a natural chat and receive a **complete personalized study structure generated automatically by AI** — subjects, topics, and 6 weeks of tasks created instantly, with a review cycle that adapts the plan as the student progresses.
 
 ---
 
@@ -339,7 +354,7 @@ The ultimate goal of StudyMind is for a student to simply answer a few questions
 
 **Eduardo Ciudad Figueredo** — Backend Java Developer
 
-[![GitHub](https://img.shields.io/badge/GitHub-educiudad-181717?style=flat&logo=github)](https://github.com/educiudad)
+[![GitHub](https://img.shields.io/badge/GitHub-educiudad-181717?style=flat&logo=github)](https://github.com/eduardoCiudad)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Eduardo_Ciudad-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/eduardo-ciudad-figueredo/)
 
 ---
