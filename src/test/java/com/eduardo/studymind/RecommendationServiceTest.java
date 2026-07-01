@@ -135,7 +135,7 @@ class RecommendationServiceTest {
         verify(aiClient).gerarResposta(argThat(prompt ->
                 prompt.contains("Funções") &&
                         prompt.contains("Matemática") &&
-                        prompt.contains("30,0%")
+                        prompt.contains("30.0%")
         ));
     }
 }
