@@ -10,7 +10,16 @@
       "Bash(Out-String)",
       "Bash(Get-ChildItem \"C:\\\\Users\\\\eduar\\\\studymind\\\\src\\\\main\\\\java\\\\com\\\\eduardo\\\\studymind\\\\controller\" -Filter \"*.java\")",
       "Bash(Select-Object -ExpandProperty Name)",
-      "PowerShell(head *)"
+      "PowerShell(head *)",
+      "Bash(./mvnw -q -DskipTests compile)",
+      "Bash(./mvnw -q test-compile)",
+      "Bash(./mvnw -q test -Dtest='AulaServiceTest,EmailServiceTest,ResultadoSessaoServiceTest,TarefaDescricaoServiceTest,TokenVerificacaoServiceTest,JwtServiceTest,UserDetailsServiceImplTest,SecurityUtilsTest,AuthFilterTest,RateLimitingFilterTest,GlobalExceptionHandlerTest' -Dsurefire.printSummary=true)",
+      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\"; cat {}')",
+      "Bash(xargs -I{} basename {} .txt)",
+      "Bash(./mvnw -q test -Dtest='UsuarioServiceTest')",
+      "Bash(./mvnw -q test -Dtest='UsuarioServiceTest,MateriaServiceTest,TarefaServiceTest,TopicoServiceTest,QuestaoServiceTest,ResultadoServiceTest,PlanoEstudoServiceTest,PlanoEstudoParserTest,OnboardingServiceTest,PerformanceAnalyzerServiceTest,RecommendationServiceTest')",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

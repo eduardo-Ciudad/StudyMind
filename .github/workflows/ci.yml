@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: studymind
+          POSTGRES_USER: studymind
+          POSTGRES_PASSWORD: studymind
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U studymind -d studymind"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/studymind
+      DB_USERNAME: studymind
+      DB_PASSWORD: studymind
+      JWT_SECRET: ci-test-secret-not-for-production
+      ANTHROPIC_API_KEY: ci-test-key
+      MAIL_USERNAME: ci@example.com
+      MAIL_PASSWORD: ci-test-password
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Make mvnw executable
+        run: chmod +x ./mvnw
+
+      - name: Run tests and build with Maven
+        run: ./mvnw verify -B
