@@ -27,6 +27,7 @@ public class JwtService {
                     .withSubject(usuario.getEmail())
                     .withClaim("role", usuario.getRole().name())
                     .withClaim("id", usuario.getId())
+                    .withClaim("tipo", "access")
                     .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                     .sign(algorithm);
         } catch (JWTCreationException e) {
@@ -39,6 +40,7 @@ public class JwtService {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return JWT.require(algorithm)
                     .withIssuer("studymind-api")
+                    .withClaim("tipo", "access")
                     .build()
                     .verify(token)
                     .getSubject();
